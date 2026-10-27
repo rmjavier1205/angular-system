@@ -1,0 +1,230 @@
+
+<section class="space-y-6">
+  <header class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-wider text-primary">
+        Asset management
+      </p>
+      <h1 class="text-3xl font-bold">Inventory</h1>
+      <p class="mt-1 text-base-content/60">
+        Manage your organization's IT equipment.
+      </p>
+    </div>
+
+    <button class="btn btn-primary" type="button" (click)="openForm()">
+      + Add equipment
+    </button>
+  </header>
+
+  @if (successMessage()) {
+    <div class="alert alert-success">{{ successMessage() }}</div>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert alert-error">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="flex items-center gap-3 rounded-box bg-base-100 p-6">
+      <span class="loading loading-spinner"></span>
+      Loading inventory...
+    </div>
+  } @else {
+    <div class="grid gap-4 sm:grid-cols-3">
+      <div class="stat rounded-box bg-base-100 shadow-sm">
+        <div class="stat-title">Total assets</div>
+        <div class="stat-value text-primary">{{ assets().length }}</div>
+      </div>
+      <div class="stat rounded-box bg-base-100 shadow-sm">
+        <div class="stat-title">Available</div>
+        <div class="stat-value text-success">
+          {{ assets().filter(a => a.status === 'available').length }}
+        </div>
+      </div>
+      <div class="stat rounded-box bg-base-100 shadow-sm">
+        <div class="stat-title">Assigned</div>
+        <div class="stat-value text-info">
+          {{ assets().filter(a => a.status === 'assigned').length }}
+        </div>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+      <table class="table table-zebra">
+        <thead>
+          <tr>
+            <th>Asset tag</th>
+            <th>Equipment</th>
+            <th>Category</th>
+            <th>Brand / Model</th>
+            <th>Purchase cost</th>
+            <th>Condition</th>
+            <th>Status</th>
+            <th>Location</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (asset of assets(); track asset.id) {
+            <tr>
+              <td class="font-mono font-semibold">{{ asset.asset_tag }}</td>
+              <td>
+                <div class="font-medium">{{ asset.name }}</div>
+                <div class="text-xs text-base-content/60">
+                  {{ asset.serial_number || 'No serial number' }}
+                </div>
+              </td>
+              <td>{{ categoryName(asset.category_id) }}</td>
+              <td>{{ asset.brand || '—' }} {{ asset.model || '' }}</td>
+              <td>{{ asset.purchase_cost | currency:'PHP':'symbol':'1.2-2' }}</td>
+              <td>{{ asset.condition }}</td>
+              <td><span class="badge badge-outline">{{ asset.status }}</span></td>
+              <td>{{ asset.office_location || '—' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="py-12 text-center">No equipment found.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (showForm()) {
+    <div class="modal modal-open">
+      <div class="modal-box max-h-none max-w-4xl">
+        <h2 class="text-2xl font-bold">Add equipment</h2>
+        <p class="mt-1 text-sm text-base-content/60">
+          Enter the equipment details below.
+        </p>
+
+        <form class="mt-6 space-y-5" (ngSubmit)="saveAsset()">
+          <div class="grid gap-4 md:grid-cols-2">
+            <label class="form-control">
+              <span class="label-text mb-1">Asset tag *</span>
+              <input
+                class="input input-bordered w-full"
+                name="asset_tag"
+                [(ngModel)]="form.asset_tag"
+                required
+              />
+            </label>
+
+            <label class="form-control">
+              <span class="label-text mb-1">Equipment name *</span>
+              <input
+                class="input input-bordered w-full"
+                name="name"
+                [(ngModel)]="form.name"
+                required
+              />
+            </label>
+
+            <label class="form-control">
+              <span class="label-text mb-1">Category</span>
+              <select
+                class="select select-bordered w-full"
+                name="category_id"
+                [(ngModel)]="form.category_id"
+              >
+                <option [ngValue]="null">Select category</option>
+                @for (category of categories(); track category.id) {
+                  <option [ngValue]="category.id">{{ category.name }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="form-control">
+              <span class="label-text mb-1">Brand</span>
+              <input class="input input-bordered w-full" name="brand" [(ngModel)]="form.brand" />
+            </label>
+
+            <label class="form-control">
+              <span class="label-text mb-1">Model</span>
+              <input class="input input-bordered w-full" name="model" [(ngModel)]="form.model" />
+            </label>
+
+            <label class="form-control">
+              <span class="label-text mb-1">Serial number</span>
+              <input class="input input-bordered w-full" name="serial_number" [(ngModel)]="form.serial_number" />
+            </label>
+
+            <label class="form-control">
+              <span class="label-text mb-1">Purchase date</span>
+              <input class="input input-bordered w-full" type="date" name="purchase_date" [(ngModel)]="form.purchase_date" />
+            </label>
+
+            <label class="form-control">
+              <span class="label-text mb-1">Purchase cost (PHP)</span>
+              <input class="input input-bordered w-full" type="number" min="0" step="0.01" name="purchase_cost" [(ngModel)]="form.purchase_cost" />
+            </label>
+
+            <label class="form-control">
+              <span class="label-text mb-1">Supplier</span>
+              <input class="input input-bordered w-full" name="supplier" [(ngModel)]="form.supplier" />
+            </label>
+
+            <label class="form-control">
+              <span class="label-text mb-1">Warranty expiry</span>
+              <input class="input input-bordered w-full" type="date" name="warranty_expiry" [(ngModel)]="form.warranty_expiry" />
+            </label>
+
+            <label class="form-control">
+              <span class="label-text mb-1">Condition</span>
+              <select class="select select-bordered w-full" name="condition" [(ngModel)]="form.condition">
+                @for (condition of conditions; track condition) {
+                  <option [ngValue]="condition">{{ condition }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="form-control">
+              <span class="label-text mb-1">Status</span>
+              <select class="select select-bordered w-full" name="status" [(ngModel)]="form.status">
+                @for (status of statuses; track status) {
+                  <option [ngValue]="status">{{ status }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="form-control">
+              <span class="label-text mb-1">Assigned employee</span>
+              <select class="select select-bordered w-full" name="employee_id" [(ngModel)]="form.employee_id" (ngModelChange)="onEmployeeChange()">
+                <option [ngValue]="null">Unassigned</option>
+                @for (employee of employees(); track employee.id) {
+                  <option [ngValue]="employee.id">
+                    {{ employee.full_name }}{{ employee.employee_no ? ' (' + employee.employee_no + ')' : '' }}
+                  </option>
+                }
+              </select>
+            </label>
+
+            <label class="form-control">
+              <span class="label-text mb-1">Unit / Section</span>
+              <input class="input input-bordered w-full" name="unit_section" [(ngModel)]="form.unit_section" />
+            </label>
+
+            <label class="form-control">
+              <span class="label-text mb-1">Office location</span>
+              <input class="input input-bordered w-full" name="office_location" [(ngModel)]="form.office_location" />
+            </label>
+
+            <label class="form-control md:col-span-2">
+              <span class="label-text mb-1">Notes</span>
+              <textarea class="textarea textarea-bordered w-full" name="notes" [(ngModel)]="form.notes"></textarea>
+            </label>
+          </div>
+
+          <div class="modal-action">
+            <button class="btn btn-ghost" type="button" (click)="closeForm()">Cancel</button>
+            <button class="btn btn-primary" type="submit" [disabled]="saving()">
+              {{ saving() ? 'Saving...' : 'Save equipment' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <button class="modal-backdrop" type="button" aria-label="Close modal" (click)="closeForm()"></button>
+    </div>
+  }
+</section>

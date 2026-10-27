@@ -1,0 +1,64 @@
+<div class="min-h-screen bg-base-200">
+  <div class="drawer lg:drawer-open">
+    <input id="assetdesk-drawer" type="checkbox" class="drawer-toggle" />
+
+    <div class="drawer-content flex flex-col">
+      <header class="navbar bg-base-100 border-b border-base-300 px-4">
+        <label
+          for="assetdesk-drawer"
+          class="btn btn-square btn-ghost drawer-button lg:hidden"
+          aria-label="Open navigation menu"
+        >
+          ☰
+        </label>
+
+        <div class="flex-1">
+          <span class="text-lg font-bold">IT Equipment Management</span>
+        </div>
+
+        <div class="badge badge-primary badge-outline">AssetDesk</div>
+      </header>
+
+      <main class="flex-1 p-4 md:p-6">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
+
+    <div class="drawer-side z-40">
+      <label
+        for="assetdesk-drawer"
+        aria-label="Close navigation menu"
+        class="drawer-overlay"
+      ></label>
+
+      <aside class="min-h-full w-72 bg-base-100 border-r border-base-300">
+        <div class="p-6 border-b border-base-300">
+          <h1 class="text-2xl font-extrabold text-primary">AssetDesk</h1>
+          <p class="text-sm text-base-content/60 mt-1">
+            IT Asset Management
+          </p>
+        </div>
+
+        <nav class="menu p-4 gap-1">
+          <span class="menu-title">MAIN MENU</span>
+
+          <a routerLink="/dashboard" routerLinkActive="active">
+            Dashboard
+          </a>
+          <a routerLink="/inventory" routerLinkActive="active">
+            Inventory
+          </a>
+          <a routerLink="/employees" routerLinkActive="active">
+            Employees
+          </a>
+          <a routerLink="/assignments" routerLinkActive="active">
+            Assignments
+          </a>
+          <a routerLink="/maintenance" routerLinkActive="active">
+            Maintenance
+          </a>
+        </nav>
+      </aside>
+    </div>
+  </div>
+</div>

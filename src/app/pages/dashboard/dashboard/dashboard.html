@@ -1,0 +1,104 @@
+<section class="dashboard" aria-labelledby="dashboard-title">
+  <header class="dashboard__header">
+    <div>
+      <p class="dashboard__eyebrow">OVERVIEW</p>
+      <h2 id="dashboard-title">Dashboard</h2>
+      <p class="dashboard__intro">
+        A clear view of your organization's IT equipment.
+      </p>
+    </div>
+    <span class="dashboard__workspace">AssetDesk workspace</span>
+  </header>
+
+  <section class="dashboard__metrics" aria-label="Asset summary">
+    <article class="metric-card">
+      <p class="metric-card__label">Total assets</p>
+      <p class="metric-card__value" aria-label="No data available">—</p>
+      <p class="metric-card__hint">Tracked equipment</p>
+    </article>
+    <article class="metric-card">
+      <p class="metric-card__label">Assigned</p>
+      <p class="metric-card__value" aria-label="No data available">—</p>
+      <p class="metric-card__hint">Currently with employees</p>
+    </article>
+    <article class="metric-card">
+      <p class="metric-card__label">Available</p>
+      <p class="metric-card__value" aria-label="No data available">—</p>
+      <p class="metric-card__hint">Ready to be assigned</p>
+    </article>
+    <article class="metric-card metric-card--attention">
+      <p class="metric-card__label">Needs attention</p>
+      <p class="metric-card__value" aria-label="No data available">—</p>
+      <p class="metric-card__hint">Maintenance and follow-ups</p>
+    </article>
+  </section>
+
+  <div class="dashboard__content">
+    <section class="dashboard-panel" aria-labelledby="activity-title">
+      <div class="dashboard-panel__header">
+        <div>
+          <h3 id="activity-title">Recent activity</h3>
+          <p>Updates across your equipment</p>
+        </div>
+      </div>
+      <div class="dashboard-empty">
+        <span class="dashboard-empty__mark" aria-hidden="true">A</span>
+        <h4>Your activity will appear here</h4>
+        <p>
+          Add equipment or update a record to start building your activity
+          history.
+        </p>
+      </div>
+    </section>
+
+    <nav class="dashboard-panel quick-links" aria-labelledby="quick-links-title">
+      <div class="dashboard-panel__header">
+        <div>
+          <h3 id="quick-links-title">Quick links</h3>
+          <p>Go to a workspace area</p>
+        </div>
+      </div>
+      <a class="quick-links__item" routerLink="/inventory">
+        <span class="quick-links__icon" aria-hidden="true">01</span>
+        <span>
+          <strong>Inventory</strong>
+          <small>Browse equipment records</small>
+        </span>
+        <span class="quick-links__arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="quick-links__item" routerLink="/employees">
+        <span class="quick-links__icon" aria-hidden="true">02</span>
+        <span>
+          <strong>Employees</strong>
+          <small>View your team directory</small>
+        </span>
+        <span class="quick-links__arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="quick-links__item" routerLink="/maintenance">
+        <span class="quick-links__icon" aria-hidden="true">03</span>
+        <span>
+          <strong>Maintenance</strong>
+          <small>Review service records</small>
+        </span>
+        <span class="quick-links__arrow" aria-hidden="true">→</span>
+      </a>
+    </nav>
+  </div>
+</section>
+
+
+
+<section class="dashboard-panel" aria-labelledby="connection-title">
+  <h3 id="connection-title">Supabase Connection Test</h3>
+
+  <p>{{ connectionStatus() }}</p>
+
+  <button
+    class="btn btn-primary"
+    type="button"
+    [disabled]="testing()"
+    (click)="testConnection()"
+  >
+    {{ testing() ? 'Testing...' : 'Test Supabase Connection' }}
+  </button>
+</section>
