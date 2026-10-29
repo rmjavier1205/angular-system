@@ -1,0 +1,175 @@
+<div class="space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <p class="text-sm font-medium uppercase tracking-wider text-primary">Asset Management</p>
+      <h1 class="text-3xl font-bold">Authorized Issuers</h1>
+      <p class="mt-1 text-base-content/60">Manage personnel authorized to issue equipment.</p>
+    </div>
+
+    <button class="btn btn-primary" (click)="openAddForm()">+ Add issuer</button>
+  </div>
+
+  @if (successMessage()) {
+    <div class="alert alert-success">{{ successMessage() }}</div>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert alert-error">{{ errorMessage() }}</div>
+  }
+
+  <div class="grid gap-4 sm:grid-cols-3">
+    <div class="stat rounded-xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">Total issuers</div>
+      <div class="stat-value text-primary">{{ issuers().length }}</div>
+    </div>
+
+    <div class="stat rounded-xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">Active issuers</div>
+      <div class="stat-value text-success">
+        {{ issuers().filter((i) => i.active).length }}
+      </div>
+    </div>
+
+    <div class="stat rounded-xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">Inactive issuers</div>
+      <div class="stat-value text-error">
+        {{ issuers().filter((i) => !i.active).length }}
+      </div>
+    </div>
+  </div>
+
+  <div class="card border border-base-300 bg-base-100 shadow-sm">
+    <div class="card-body p-0">
+      <div class="border-b border-base-300 p-4">
+        <input
+          type="search"
+          class="input input-bordered w-full max-w-md"
+          placeholder="Search name, employee no., or email..."
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+        />
+      </div>
+
+      @if (loading()) {
+        <div class="flex justify-center p-12">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+        </div>
+      } @else if (filteredIssuers.length === 0) {
+        <div class="p-12 text-center text-base-content/60">No authorized issuers found.</div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="table table-zebra">
+            <thead>
+              <tr>
+                <th>Issuer</th>
+                <th>Employee No.</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (issuer of filteredIssuers; track issuer.id) {
+                <tr>
+                  <td class="font-medium">{{ issuer.full_name }}</td>
+                  <td>{{ issuer.employee_no || '—' }}</td>
+                  <td>{{ issuer.email || '—' }}</td>
+                  <td>
+                    <span
+                      class="badge"
+                      [class.badge-success]="issuer.active"
+                      [class.badge-ghost]="!issuer.active"
+                    >
+                      {{ issuer.active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="flex gap-2">
+                      <button class="btn btn-sm btn-outline" (click)="openEditForm(issuer)">
+                        Edit
+                      </button>
+                      <button
+                        class="btn btn-sm"
+                        [class.btn-error]="issuer.active"
+                        [class.btn-success]="!issuer.active"
+                        (click)="toggleActive(issuer)"
+                      >
+                        {{ issuer.active ? 'Deactivate' : 'Activate' }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+@if (showForm()) {
+  <dialog class="modal modal-open">
+    <div class="modal-box max-w-2xl">
+      <h3 class="text-xl font-bold">
+        {{ editingId() === null ? 'Add authorized issuer' : 'Edit authorized issuer' }}
+      </h3>
+
+      <form class="mt-5 space-y-4" (ngSubmit)="saveIssuer()">
+        <label class="form-control">
+          <span class="label-text mb-2">Full name *</span>
+          <input
+            class="input input-bordered"
+            name="full_name"
+            [(ngModel)]="form.full_name"
+            required
+            placeholder="Issuer full name"
+          />
+        </label>
+
+        <label class="form-control">
+          <span class="label-text mb-2">Employee number</span>
+          <input
+            class="input input-bordered"
+            name="employee_no"
+            [(ngModel)]="form.employee_no"
+            placeholder="e.g. EMP-0001"
+          />
+        </label>
+
+        <label class="form-control">
+          <span class="label-text mb-2">Email</span>
+          <input
+            class="input input-bordered"
+            type="email"
+            name="email"
+            [(ngModel)]="form.email"
+            placeholder="issuer@example.com"
+          />
+        </label>
+
+        <label class="label cursor-pointer justify-start gap-3">
+          <input
+            class="checkbox checkbox-primary"
+            type="checkbox"
+            name="active"
+            [(ngModel)]="form.active"
+          />
+          <span class="label-text">Active and available for equipment issuing</span>
+        </label>
+
+        <div class="modal-action">
+          <button type="button" class="btn btn-ghost" (click)="closeForm()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            @if (saving()) {
+              <span class="loading loading-spinner loading-sm"></span>
+            }
+            {{ editingId() === null ? 'Save issuer' : 'Update issuer' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <button class="modal-backdrop" aria-label="Close dialog" (click)="closeForm()"></button>
+  </dialog>
+}

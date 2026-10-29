@@ -1,1 +1,260 @@
-<p>employees works!</p>
+<div class="space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <p class="text-sm font-medium uppercase tracking-wider text-primary">Asset Management</p>
+      <h1 class="text-3xl font-bold">Employees</h1>
+      <p class="mt-1 text-base-content/60">Manage employees and their equipment assignments.</p>
+    </div>
+
+    <button class="btn btn-primary" (click)="openAddForm()">+ Add employee</button>
+  </div>
+
+  @if (successMessage()) {
+    <div class="alert alert-success">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert alert-error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <div class="grid gap-4 sm:grid-cols-3">
+    <div class="stat rounded-xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">Total employees</div>
+      <div class="stat-value text-primary">{{ employees().length }}</div>
+    </div>
+
+    <div class="stat rounded-xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">Active employees</div>
+      <div class="stat-value text-success">
+        {{ employees().filter((e) => e.active).length }}
+      </div>
+    </div>
+
+    <div class="stat rounded-xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">Inactive employees</div>
+      <div class="stat-value text-error">
+        {{ employees().filter((e) => !e.active).length }}
+      </div>
+    </div>
+  </div>
+
+  <div class="card border border-base-300 bg-base-100 shadow-sm">
+    <div class="card-body p-0">
+      <div class="border-b border-base-300 p-4">
+        <input
+          type="search"
+          class="input input-bordered w-full max-w-md"
+          placeholder="Search name, employee no., unit, or email..."
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+        />
+      </div>
+
+      @if (loading()) {
+        <div class="flex justify-center p-12">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+        </div>
+      } @else if (filteredEmployees.length === 0) {
+        <div class="p-12 text-center text-base-content/60">No employees found.</div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="table table-zebra">
+            <thead>
+              <tr>
+                <th>Employee No.</th>
+                <th>Employee</th>
+                <th>Unit / Section</th>
+                <th>Office Location</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Issuer Authorization</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (employee of filteredEmployees; track employee.id) {
+                <tr>
+                  <td>{{ employee.employee_no || '—' }}</td>
+                  <td class="font-medium">{{ employee.full_name }}</td>
+                  <td>{{ employee.unit_section || '—' }}</td>
+                  <td>{{ employee.office_location || '—' }}</td>
+                  <td>{{ employee.email || '—' }}</td>
+
+                  <td>
+                    <span
+                      class="badge"
+                      [class.badge-success]="employee.active"
+                      [class.badge-ghost]="!employee.active"
+                    >
+                      {{ employee.active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+
+                  <td>
+                    @if (isIssuer(employee.id)) {
+                      <span class="badge badge-success">Authorized issuer</span>
+                    } @else {
+                      <span class="badge badge-ghost">Not authorized</span>
+                    }
+                  </td>
+
+                  <td>
+                    <div class="flex flex-nowrap items-center gap-2">
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline"
+                        (click)="openEditForm(employee)"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        class="btn btn-sm"
+                        [class.btn-error]="employee.active"
+                        [class.btn-success]="!employee.active"
+                        (click)="toggleActive(employee)"
+                      >
+                        {{ employee.active ? 'Deactivate' : 'Activate' }}
+                      </button>
+
+                      @if (isAdmin()) {
+                        <button
+                          type="button"
+                          class="btn btn-sm"
+                          [class.btn-error]="isIssuer(employee.id)"
+                          [class.btn-success]="!isIssuer(employee.id)"
+                          [disabled]="issuerActionId() === employee.id || !employee.active"
+                          (click)="toggleIssuer(employee)"
+                        >
+                          @if (issuerActionId() === employee.id) {
+                            <span class="loading loading-spinner loading-xs"></span>
+                          }
+
+                          {{ isIssuer(employee.id) ? 'Revoke issuer' : 'Authorize as issuer' }}
+                        </button>
+                      }
+
+                      @if (isSuperAdmin()) {
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-error"
+                          (click)="deleteEmployee(employee)"
+                        >
+                          Delete
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+@if (showForm()) {
+  <dialog class="modal modal-open">
+    <div class="modal-box max-w-2xl">
+      <h3 class="text-xl font-bold">
+        {{ editingId() === null ? 'Add employee' : 'Edit employee' }}
+      </h3>
+
+      <form class="mt-5 space-y-4" (ngSubmit)="saveEmployee()">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="form-control">
+            <span class="label-text mb-2">Employee number</span>
+            <input
+              class="input input-bordered"
+              name="employee_no"
+              [(ngModel)]="form.employee_no"
+              placeholder="e.g. EMP-0001"
+            />
+          </label>
+
+          <label class="form-control">
+            <span class="label-text mb-2">Full name *</span>
+            <input
+              class="input input-bordered"
+              name="full_name"
+              [(ngModel)]="form.full_name"
+              required
+              placeholder="Lastname, Firstname Middlename"
+            />
+          </label>
+
+          <label class="form-control">
+            <span class="label-text mb-2">Unit / Section</span>
+            <input
+              class="input input-bordered"
+              name="unit_section"
+              [(ngModel)]="form.unit_section"
+              placeholder="e.g. IT Section"
+            />
+          </label>
+
+          <label class="form-control">
+            <span class="label-text mb-2">Office Location</span>
+            <input
+              class="input input-bordered"
+              name="office_location"
+              [(ngModel)]="form.office_location"
+              placeholder="e.g. 4th Floor"
+            />
+          </label>
+
+          <label class="form-control">
+            <span class="label-text mb-2">Work Assignment</span>
+            <textarea
+              class="textarea textarea-bordered w-full"
+              name="work_assignment"
+              [(ngModel)]="form.work_assignment"
+              placeholder="e.g. IT Section"
+            ></textarea>
+          </label>
+
+          <label class="form-control">
+            <span class="label-text mb-2">Email</span>
+            <input
+              class="input input-bordered"
+              type="email"
+              name="email"
+              [(ngModel)]="form.email"
+              placeholder="employee@example.com"
+            />
+          </label>
+
+          <label class="label cursor-pointer justify-start gap-3 sm:col-span-2">
+            <input
+              class="checkbox checkbox-primary"
+              type="checkbox"
+              name="active"
+              [(ngModel)]="form.active"
+            />
+            <span class="label-text">Active employee</span>
+          </label>
+        </div>
+
+        <div class="modal-action">
+          <button type="button" class="btn btn-ghost" (click)="closeForm()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            @if (saving()) {
+              <span class="loading loading-spinner loading-sm"></span>
+            }
+            {{ editingId() === null ? 'Save employee' : 'Update employee' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <button class="modal-backdrop" aria-label="Close dialog" (click)="closeForm()"></button>
+  </dialog>
+}

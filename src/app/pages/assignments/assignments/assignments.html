@@ -1,1 +1,324 @@
-<p>assignments works!</p>
+<div class="space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <p class="text-sm font-medium uppercase tracking-wider text-primary">Asset Management</p>
+      <h1 class="text-3xl font-bold">Equipment Assignments</h1>
+      <p class="mt-1 text-base-content/60">Issue equipment to employees and record returns.</p>
+    </div>
+
+    <button
+      class="btn btn-primary"
+      (click)="openAssignForm()"
+      [disabled]="availableAssets().length === 0 || employees().length === 0"
+    >
+      + Assign equipment
+    </button>
+  </div>
+
+  @if (successMessage()) {
+    <div class="alert alert-success">{{ successMessage() }}</div>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert alert-error">{{ errorMessage() }}</div>
+  }
+
+  <div class="grid gap-4 sm:grid-cols-3">
+    <div class="stat rounded-xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">Total records</div>
+      <div class="stat-value text-primary">{{ assignments().length }}</div>
+    </div>
+    <div class="stat rounded-xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">Active assignments</div>
+      <div class="stat-value text-warning">
+        {{ assignments().filter((a) => !a.returned_at).length }}
+      </div>
+    </div>
+    <div class="stat rounded-xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">Returned equipment</div>
+      <div class="stat-value text-success">
+        {{ assignments().filter((a) => a.returned_at).length }}
+      </div>
+    </div>
+  </div>
+
+  <div class="card border border-base-300 bg-base-100 shadow-sm">
+    <div class="card-body p-0">
+      <div class="border-b border-base-300 p-4">
+        <input
+          type="search"
+          class="input input-bordered w-full max-w-md"
+          placeholder="Search asset tag, equipment, or employee..."
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+        />
+      </div>
+
+      @if (loading()) {
+        <div class="flex justify-center p-12">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+        </div>
+      } @else if (filteredAssignments.length === 0) {
+        <div class="p-12 text-center text-base-content/60">No assignment records found.</div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="table table-zebra">
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th>Assigned Employee</th>
+                <th>Assigned Date</th>
+                <th>Issued By</th>
+                <th>Issue Condition</th>
+                <th>Return Date</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of filteredAssignments; track item.id) {
+                <tr>
+                  <td>
+                    <div class="font-semibold">
+                      {{ item.assets?.asset_tag || '—' }}
+                    </div>
+                    <div class="text-sm text-base-content/60">
+                      {{ item.assets?.name || 'Unknown asset' }}
+                    </div>
+                  </td>
+
+                  <td>
+                    <div class="font-medium">
+                      {{ item.employees?.full_name || 'Unknown employee' }}
+                    </div>
+                    <div class="text-sm text-base-content/60">
+                      {{ item.employees?.employee_no || '—' }}
+                    </div>
+                  </td>
+
+                  <td>{{ item.assigned_at | date: 'mediumDate' }}</td>
+
+                  <td>
+                    @if (item.authorized_issuers?.employees; as issuerEmployee) {
+                      <div class="font-medium">{{ issuerEmployee.full_name }}</div>
+                      <div class="text-sm text-base-content/60">
+                        {{ issuerEmployee.employee_no || '—' }}
+                      </div>
+                    } @else {
+                      <span class="text-base-content/50">Not recorded</span>
+                    }
+                  </td>
+
+                  <td class="capitalize">
+                    {{ item.received_condition || '—' }}
+                  </td>
+
+                  <td>
+                    {{ item.returned_at ? (item.returned_at | date: 'mediumDate') : '—' }}
+                  </td>
+                  <td>
+                    @if (!item.returned_at) {
+                      <span class="badge badge-warning">Assigned</span>
+                    } @else {
+                      <span class="badge badge-success">Returned</span>
+                    }
+                  </td>
+                  <td>
+                    @if (!item.returned_at) {
+                      <button class="btn btn-sm btn-outline" (click)="openReturnForm(item)">
+                        Return
+                      </button>
+                    } @else {
+                      <span class="text-sm text-base-content/50">Completed</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+@if (showForm()) {
+  <dialog class="modal modal-open">
+    <div class="modal-box max-w-3xl">
+      <h3 class="text-xl font-bold">Assign equipment</h3>
+
+      <form class="mt-5 space-y-4" (ngSubmit)="assignAsset()">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="form-control">
+            <span class="label-text mb-2">Available equipment *</span>
+            <select
+              class="select select-bordered w-full"
+              name="asset_id"
+              [(ngModel)]="form.asset_id"
+              required
+            >
+              <option [ngValue]="null">Select equipment</option>
+              @for (asset of availableAssets(); track asset.id) {
+                <option [ngValue]="asset.id">{{ asset.asset_tag }} — {{ asset.name }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="form-control">
+            <span class="label-text mb-2">Employee *</span>
+            <select
+              class="select select-bordered w-full"
+              name="employee_id"
+              [(ngModel)]="form.employee_id"
+              required
+            >
+              <option [ngValue]="null">Select employee</option>
+              @for (employee of employees(); track employee.id) {
+                <option [ngValue]="employee.id">
+                  {{ employee.full_name }}
+                  <!-- {{ employee.employee_no ? ' (' + employee.employee_no + ')' : '' }} -->
+                </option>
+              }
+            </select>
+          </label>
+
+          <label class="form-control">
+            <span class="label-text mb-2">Assignment date *</span>
+            <input
+              class="input input-bordered w-full"
+              type="date"
+              name="assigned_at"
+              [(ngModel)]="form.assigned_at"
+              required
+            />
+          </label>
+
+          <label class="form-control">
+            <span class="label-text mb-2">Condition when issued *</span>
+            <select
+              class="select select-bordered w-full"
+              name="received_condition"
+              [(ngModel)]="form.received_condition"
+            >
+              @for (condition of conditions; track condition) {
+                <option [value]="condition">{{ condition | titlecase }}</option>
+              }
+            </select>
+          </label>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-control">
+            <span class="label-text mb-2">Issued by *</span>
+
+            <select
+              class="select select-bordered w-full"
+              name="issued_by"
+              [(ngModel)]="form.issued_by"
+              required
+            >
+              <option [ngValue]="null">Select authorized issuer</option>
+
+              @for (issuer of issuers(); track issuer.id) {
+                <option [ngValue]="issuer.id">
+                  {{ issuer.employee.full_name }}
+                  {{ issuer.employee.employee_no ? ' (' + issuer.employee.employee_no + ')' : '' }}
+                </option>
+              }
+            </select>
+
+            @if (issuers().length === 0) {
+              <span class="label-text-alt mt-1 text-warning">
+                No active authorized issuers available.
+              </span>
+            }
+          </label>
+        </div>
+        <label class="form-control">
+          <span class="label-text mb-2">Notes</span>
+          <textarea
+            class="textarea textarea-bordered w-full"
+            name="notes"
+            [(ngModel)]="form.notes"
+            placeholder="Optional notes"
+          ></textarea>
+        </label>
+
+        <div class="modal-action">
+          <button type="button" class="btn btn-ghost" (click)="closeAssignForm()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            @if (saving()) {
+              <span class="loading loading-spinner loading-sm"></span>
+            }
+            Confirm assignment
+          </button>
+        </div>
+      </form>
+    </div>
+    <button class="modal-backdrop" aria-label="Close dialog" (click)="closeAssignForm()"></button>
+  </dialog>
+}
+
+@if (showReturnForm() && selectedAssignment(); as selected) {
+  <dialog class="modal modal-open">
+    <div class="modal-box">
+      <h3 class="text-xl font-bold">Return equipment</h3>
+      <p class="mt-2 text-sm text-base-content/60">
+        {{ selected.assets?.asset_tag }} — {{ selected.assets?.name }}
+      </p>
+      <p class="text-sm">Assigned to: {{ selected.employees?.full_name }}</p>
+
+      <form class="mt-5 space-y-4" (ngSubmit)="returnAsset()">
+        <label class="form-control">
+          <span class="label-text mb-2">Return date *</span>
+          <input
+            class="input input-bordered w-full"
+            type="date"
+            name="returned_at"
+            [(ngModel)]="returnForm.returned_at"
+            required
+          />
+        </label>
+
+        <label class="form-control">
+          <span class="label-text mb-2">Condition on return *</span>
+          <select
+            class="select select-bordered"
+            name="return_condition"
+            [(ngModel)]="returnForm.return_condition"
+          >
+            @for (condition of conditions; track condition) {
+              <option [value]="condition">{{ condition | titlecase }}</option>
+            }
+          </select>
+        </label>
+
+        <p class="text-sm text-base-content/60">
+          Equipment returned in Poor condition will be marked Under Repair. Other conditions will be
+          marked Available.
+        </p>
+
+        <label class="form-control">
+          <span class="label-text mb-2">Return notes</span>
+          <textarea
+            class="textarea textarea-bordered"
+            name="return_notes"
+            [(ngModel)]="returnForm.notes"
+            placeholder="Optional notes about the return"
+          ></textarea>
+        </label>
+
+        <div class="modal-action">
+          <button type="button" class="btn btn-ghost" (click)="closeReturnForm()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            @if (saving()) {
+              <span class="loading loading-spinner loading-sm"></span>
+            }
+            Confirm return
+          </button>
+        </div>
+      </form>
+    </div>
+    <button class="modal-backdrop" aria-label="Close dialog" (click)="closeReturnForm()"></button>
+  </dialog>
+}
