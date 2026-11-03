@@ -15,13 +15,13 @@
     </button>
   </div>
 
-  @if (successMessage()) {
+  <!-- @if (successMessage()) {
     <div class="alert alert-success">{{ successMessage() }}</div>
   }
 
   @if (errorMessage()) {
     <div class="alert alert-error">{{ errorMessage() }}</div>
-  }
+  } -->
 
   <div class="grid gap-4 sm:grid-cols-3">
     <div class="stat rounded-xl border border-base-300 bg-base-100 shadow-sm">
@@ -148,6 +148,26 @@
       <h3 class="text-xl font-bold">Assign equipment</h3>
 
       <form class="mt-5 space-y-4" (ngSubmit)="assignAsset()">
+
+      @if (errorMessage()) {
+        <div class="alert alert-error shadow-sm" role="alert">
+          <ng-icon name="lucideAlertCircle" class="text-2xl"></ng-icon>
+          <div>
+            <p class="font-semibold">Unable to assign equipment</p>
+            <p class="text-sm">{{ errorMessage() }}</p>
+          </div>
+        </div>
+      }
+
+      @if (successMessage()) {
+        <div class="alert alert-success shadow-sm" role="status">
+          <ng-icon name="lucideCheckCircle"></ng-icon>
+          <div>
+            <p class="font-semibold">Success</p>
+            <p class="text-sm">{{ successMessage() }}</p>
+          </div>
+        </div>
+      }
         <div class="grid gap-4 sm:grid-cols-2">
           <label class="form-control">
             <span class="label-text mb-2">Available equipment *</span>
@@ -156,10 +176,12 @@
               name="asset_id"
               [(ngModel)]="form.asset_id"
               required
+
+            [class]="{'select-error':!form.asset_id}"
             >
               <option [ngValue]="null">Select equipment</option>
               @for (asset of availableAssets(); track asset.id) {
-                <option [ngValue]="asset.id">{{ asset.asset_tag }} — {{ asset.name }}</option>
+                <option [ngValue]="asset.id">{{ asset.asset_tag }} — {{ asset.serial_number }}</option>
               }
             </select>
           </label>
@@ -171,6 +193,7 @@
               name="employee_id"
               [(ngModel)]="form.employee_id"
               required
+            [class]="{'select-error':!form.employee_id}"
             >
               <option [ngValue]="null">Select employee</option>
               @for (employee of employees(); track employee.id) {
@@ -190,6 +213,7 @@
               name="assigned_at"
               [(ngModel)]="form.assigned_at"
               required
+            [class]="{'select-error':!form.assigned_at}"
             />
           </label>
 
@@ -216,6 +240,7 @@
               name="issued_by"
               [(ngModel)]="form.issued_by"
               required
+            [class]="{'select-error':!form.issued_by}"
             >
               <option [ngValue]="null">Select authorized issuer</option>
 
@@ -269,6 +294,25 @@
       <p class="text-sm">Assigned to: {{ selected.employees?.full_name }}</p>
 
       <form class="mt-5 space-y-4" (ngSubmit)="returnAsset()">
+        @if (errorMessage()) {
+          <div class="alert alert-error shadow-sm" role="alert">
+            <ng-icon name="lucideAlertCircle" class="text-lg"></ng-icon>
+            <div>
+              <p class="font-semibold">Unable to return equipment</p>
+              <p class="text-sm">{{ errorMessage() }}</p>
+            </div>
+          </div>
+        }
+
+        @if (successMessage()) {
+          <div class="alert alert-success shadow-sm" role="status">
+            <ng-icon name="lucideCheckCircle"></ng-icon>
+            <div>
+              <p class="font-semibold">Success</p>
+              <p class="text-sm">{{ successMessage() }}</p>
+            </div>
+          </div>
+        }
         <label class="form-control">
           <span class="label-text mb-2">Return date *</span>
           <input

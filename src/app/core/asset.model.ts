@@ -1,16 +1,19 @@
 
 export type AssetCondition = 'excellent' | 'good' | 'fair' | 'poor';
 
+export const ASSET_TYPES = {
+  AVAILABLE: 'available',
+  ASSIGNED: 'assigned',
+  UNDER_REPAIR: 'under_repair',
+  RETIRED: 'retired',
+  DISPOSED: 'disposed',
+} as const;
+
+export type AssetType = (typeof ASSET_TYPES)[keyof typeof ASSET_TYPES];
+
 export interface AssetStatus {
   name: string;
   value: AssetType;
-}
-export enum AssetType {
-  AVAILABLE = 'AVAILABLE',
-  ASSIGNED = 'ASSIGNED',
-  UNDER_REPAIR = 'UNDER_REPAIR',
-  RETIRED = 'RETIRED',
-  DISPOSED = 'DISPOSED',
 }
 
 export interface Asset {
@@ -28,7 +31,7 @@ export interface Asset {
   supplier: string | null;
   warranty_expiry: string | null;
   condition: AssetCondition;
-  status: AssetStatus;
+  status: AssetType;
   employee_id: number | null;
   unit_section: string | null;
   office_location: string | null;

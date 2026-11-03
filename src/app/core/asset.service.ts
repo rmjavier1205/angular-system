@@ -60,6 +60,7 @@ export type NewAsset = Omit<
 @Injectable({
   providedIn: 'root',
 })
+
 export class AssetService {
   async getAssets(): Promise<Asset[]> {
     const { data, error } = await supabase
@@ -73,6 +74,23 @@ export class AssetService {
 
     return (data ?? []) as Asset[];
   }
+
+  async updateAsset(id: number, payload: NewAsset): Promise<Asset> {
+    const { data, error } = await supabase
+      .from('assets')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Failed to update asset:', error);
+      throw new Error(error.message);
+    }
+
+    return data as Asset;
+  }
+
 
   async getCategories(): Promise<Category[]> {
     const { data, error } = await supabase

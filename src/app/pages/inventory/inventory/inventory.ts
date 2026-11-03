@@ -2,7 +2,15 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AssetService, NewAsset, BulkAssetReceiving } from '../../../core/asset.service';
-import { Asset, AssetCondition, AssetStatus, AssetType, Category, Employee } from '../../../core/asset.model';
+import {
+  ASSET_TYPES,
+  Asset,
+  AssetCondition,
+  AssetStatus,
+  AssetType,
+  Category,
+  Employee,
+} from '../../../core/asset.model';
 
 @Component({
   selector: 'app-inventory',
@@ -12,16 +20,19 @@ import { Asset, AssetCondition, AssetStatus, AssetType, Category, Employee } fro
   styleUrl: './inventory.css',
 })
 export class Inventory implements OnInit {
-  readonly AssetType = AssetType;
+  readonly AssetType = ASSET_TYPES;
   assets = signal<Asset[]>([]);
   categories = signal<Category[]>([]);
   employees = signal<Employee[]>([]);
   loading = signal(true);
   saving = signal(false);
   errorMessage = signal('');
+  pageErrorMessage = signal('');
   successMessage = signal('');
   showForm = signal(false);
   showBulkForm = signal(false);
+  showEditForm = signal(false);
+  editingId = signal<number | null>(null);
   bulkQuantity = 1;
 
   bulkForm = {
@@ -34,7 +45,7 @@ export class Inventory implements OnInit {
     supplier: '',
     warranty_expiry: '',
     condition: 'good' as AssetCondition,
-    status: AssetType.AVAILABLE as AssetStatus,
+    status: ASSET_TYPES.AVAILABLE,
     unit_section: '',
     office_location: '',
     notes: '',
@@ -60,19 +71,19 @@ export class Inventory implements OnInit {
 
   readonly statuses: AssetStatus[] = [ {
       name: 'Available',
-      value: AssetType.AVAILABLE,
+      value: ASSET_TYPES.AVAILABLE
     }, {
       name: 'Assigned',
-      value: AssetType.ASSIGNED,
+      value: ASSET_TYPES.ASSIGNED
     }, {
       name: 'Under Repair',
-      value: AssetType.UNDER_REPAIR,
+      value: ASSET_TYPES.UNDER_REPAIR
     }, {
       name: 'Retired',
-      value: AssetType.RETIRED,
+      value: ASSET_TYPES.RETIRED
     }, {
       name: 'Disposed',
-      value: AssetType.DISPOSED,
+      value: ASSET_TYPES.DISPOSED,
     }
   ];
 
@@ -99,7 +110,7 @@ export class Inventory implements OnInit {
     warranty_details: '',
 
     condition: 'good' as AssetCondition,
-    status: AssetType.AVAILABLE as AssetStatus,
+    status: ASSET_TYPES.AVAILABLE as AssetType,
     employee_id: null as number | null,
     unit_section: '',
     office_location: '',
@@ -119,7 +130,7 @@ export class Inventory implements OnInit {
 
   async loadInventory(): Promise<void> {
     this.loading.set(true);
-    this.errorMessage.set('');
+    this.pageErrorMessage.set('');
 
     try {
       const [assets, categories, employees] = await Promise.all([
@@ -133,8 +144,9 @@ export class Inventory implements OnInit {
       this.employees.set(employees);
     } catch (error) {
       console.error('Failed to load inventory:', error);
-      this.errorMessage.set(
-        'Unable to load inventory. Check Supabase permissions and your database connection.',
+
+      this.pageErrorMessage.set(
+        'Unable to load inventory. Check Supabase permissions and your database connection.'
       );
     } finally {
       this.loading.set(false);
@@ -144,13 +156,18 @@ export class Inventory implements OnInit {
   async openForm(): Promise<void> {
     this.errorMessage.set('');
     this.successMessage.set('');
+    this.editingId.set(null);
+    this.resetForm();
 
     try {
       this.form.asset_tag = await this.assetService.getNextAssetTag();
       this.showForm.set(true);
     } catch (error) {
       console.error('Failed to generate asset tag:', error);
-      this.errorMessage.set('Unable to generate an asset tag. Check your asset table permissions.');
+
+      this.pageErrorMessage.set(
+        'Unable to generate an asset tag. Check your asset table permissions.'
+      );
     }
   }
 
@@ -158,18 +175,71 @@ export class Inventory implements OnInit {
     this.showForm.set(false);
   }
 
-openBulkForm(): void {
-  this.errorMessage.set('');
-  this.successMessage.set('');
-  this.bulkQuantity = 1;
-  this.bulkItems = [{ property_no: '', serial_number: '' }];
-  this.showBulkForm.set(true);
-}
+  openBulkForm(): void {
+    this.errorMessage.set('');
+    this.successMessage.set('');
+    this.bulkQuantity = 1;
+    this.bulkItems = [{ property_no: '', serial_number: '' }];
+    this.showBulkForm.set(true);
+  }
 
 closeBulkForm(): void {
   this.showBulkForm.set(false);
 }
 
+
+openEditForm(asset: Asset): void {
+  this.errorMessage.set('');
+  this.successMessage.set('');
+  this.editingId.set(asset.id);
+
+  this.form = {
+    asset_tag: asset.asset_tag ?? '',
+    property_no: asset.property_no ?? '',
+    name: asset.name ?? '',
+    category_id: asset.category_id ?? null,
+    article_description: asset.article_description ?? '',
+    property_status: asset.property_status ?? '',
+
+    brand: asset.brand ?? '',
+    model: asset.model ?? '',
+    serial_number: asset.serial_number ?? '',
+    unit: asset.unit ?? '',
+    general_description: asset.general_description ?? '',
+
+    fund_code: asset.fund_code ?? '',
+    account_code: asset.account_code ?? '',
+    purchase_date: asset.purchase_date ?? '',
+    purchase_cost: Number(asset.purchase_cost ?? 0),
+    supplier: asset.supplier ?? '',
+    warranty_expiry: asset.warranty_expiry ?? '',
+    warranty_details: asset.warranty_details ?? '',
+
+    condition: asset.condition,
+    status: asset.status,
+    employee_id: asset.employee_id ?? null,
+    unit_section: asset.unit_section ?? '',
+    office_location: asset.office_location ?? '',
+    receiver: asset.receiver ?? '',
+
+    par_no: asset.par_no ?? '',
+    par_date: asset.par_date ?? '',
+    subpar: asset.subpar ?? '',
+    notes: asset.notes ?? '',
+  };
+
+  this.showEditForm.set(true);
+}
+
+closeEditForm(): void {
+  if (this.saving()) return;
+
+  this.showEditForm.set(false);
+  this.editingId.set(null);
+  this.errorMessage.set('');
+  this.resetForm();
+}
+  
 updateBulkQuantity(value: number | string): void {
   const quantity = Number(value);
 
@@ -296,63 +366,96 @@ async saveBulkAssets(): Promise<void> {
     this.successMessage.set('');
 
     if (!this.form.asset_tag.trim() || !this.form.name.trim()) {
-      this.errorMessage.set('Asset tag and equipment name are required.');
+      this.errorMessage.set('Asset Tag and Equipment Name are required.');
+      return;
+    }
+
+    if (!this.form.property_no.trim()) {
+      this.errorMessage.set('Property Number is required.');
       return;
     }
 
     if (this.form.status === 'assigned' && this.form.employee_id === null) {
-      this.errorMessage.set('Please select an employee for an assigned asset.');
+      this.errorMessage.set(
+        'Please select an employee for an assigned asset.'
+      );
       return;
     }
+
+    if (
+      !Number.isFinite(Number(this.form.purchase_cost)) ||
+      Number(this.form.purchase_cost) < 0
+    ) {
+      this.errorMessage.set('Acquisition cost must be zero or greater.');
+      return;
+    }
+
+    const payload: NewAsset = {
+      asset_tag: this.form.asset_tag.trim(),
+      property_no: this.form.property_no.trim(),
+      name: this.form.name.trim(),
+      category_id: this.form.category_id,
+      article_description: this.form.article_description.trim() || null,
+      property_status: this.form.property_status.trim() || null,
+
+      brand: this.form.brand.trim() || null,
+      model: this.form.model.trim() || null,
+      serial_number: this.form.serial_number.trim() || null,
+      unit: this.form.unit.trim() || null,
+      general_description: this.form.general_description.trim() || null,
+
+      fund_code: this.form.fund_code.trim() || null,
+      account_code: this.form.account_code.trim() || null,
+      purchase_date: this.form.purchase_date || null,
+      purchase_cost: Number(this.form.purchase_cost),
+      supplier: this.form.supplier.trim() || null,
+      warranty_expiry: this.form.warranty_expiry || null,
+      warranty_details: this.form.warranty_details.trim() || null,
+
+      condition: this.form.condition,
+      status: this.form.status,
+      employee_id: this.form.employee_id,
+      unit_section: this.form.unit_section.trim() || null,
+      office_location: this.form.office_location.trim() || null,
+      receiver: this.form.receiver.trim() || null,
+
+      par_no: this.form.par_no.trim() || null,
+      par_date: this.form.par_date || null,
+      subpar: this.form.subpar.trim() || null,
+      notes: this.form.notes.trim() || null,
+    };
 
     this.saving.set(true);
 
     try {
-      const payload: NewAsset = {
-        asset_tag: this.form.asset_tag.trim(),
-        property_no: this.form.property_no.trim() || null,
-        name: this.form.name.trim(),
-        category_id: this.form.category_id,
-        article_description: this.form.article_description.trim() || null,
-        property_status: this.form.property_status.trim() || null,
+      const id = this.editingId();
 
-        brand: this.form.brand.trim() || null,
-        model: this.form.model.trim() || null,
-        serial_number: this.form.serial_number.trim() || null,
-        unit: this.form.unit.trim() || null,
-        general_description: this.form.general_description.trim() || null,
+      if (id !== null) {
+        // Update existing equipment
+        await this.assetService.updateAsset(id, payload);
 
-        fund_code: this.form.fund_code.trim() || null,
-        account_code: this.form.account_code.trim() || null,
-        purchase_date: this.form.purchase_date || null,
-        purchase_cost: Number(this.form.purchase_cost) || 0,
-        supplier: this.form.supplier.trim() || null,
-        warranty_expiry: this.form.warranty_expiry || null,
-        warranty_details: this.form.warranty_details.trim() || null,
+        this.successMessage.set('Equipment updated successfully.');
+        this.showEditForm.set(false);
+      } else {
+        // Add new equipment
+        await this.assetService.createAsset(payload);
 
-        condition: this.form.condition,
-        status: this.form.status,
-        employee_id: this.form.employee_id,
-        unit_section: this.form.unit_section.trim() || null,
-        office_location: this.form.office_location.trim() || null,
-        receiver: this.form.receiver.trim() || null,
+        this.successMessage.set('Equipment added successfully.');
+        this.showForm.set(false);
+      }
 
-        par_no: this.form.par_no.trim() || null,
-        par_date: this.form.par_date || null,
-        subpar: this.form.subpar.trim() || null,
-        notes: this.form.notes.trim() || null,
-      };
+      this.editingId.set(null);
+      this.resetForm();
 
-      await this.assetService.createAsset(payload);
       await this.loadInventory();
 
-      this.successMessage.set('Equipment added successfully.');
-      this.showForm.set(false);
-      this.resetForm();
     } catch (error) {
       console.error('Failed to save equipment:', error);
+
       this.errorMessage.set(
-        'Unable to save equipment. Check required fields, unique values, and Supabase permissions.',
+        error instanceof Error
+          ? error.message
+          : 'Unable to save equipment. Check required fields, duplicate values, and Supabase permissions.'
       );
     } finally {
       this.saving.set(false);
@@ -383,7 +486,7 @@ async saveBulkAssets(): Promise<void> {
       warranty_details: '',
 
       condition: 'good',
-      status: 'available',
+      status: ASSET_TYPES.AVAILABLE,
       employee_id: null,
       unit_section: '',
       office_location: '',
@@ -401,4 +504,5 @@ async saveBulkAssets(): Promise<void> {
       this.categories().find((category) => category.id === categoryId)?.name ?? 'Uncategorized'
     );
   }
+
 }

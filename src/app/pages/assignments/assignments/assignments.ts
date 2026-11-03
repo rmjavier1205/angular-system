@@ -1,9 +1,11 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal} from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import { supabase } from '../../../core/supabase.client';
-import { Asset, AssetType, Employee, Issuer } from '../../../core/asset.model';
+import { ASSET_TYPES, Asset, Employee, Issuer } from '../../../core/asset.model';
 import { AssetService } from '../../../core/asset.service';
+import { lucideAlertCircle, lucideCheckCircle } from '@ng-icons/lucide';
 
 interface Assignment {
   id: number;
@@ -36,11 +38,18 @@ interface Assignment {
 
 @Component({
   selector: 'app-assignments',
-  standalone: true,
-  imports: [FormsModule, DatePipe, TitleCasePipe],
+  imports: [FormsModule, DatePipe, TitleCasePipe, NgIcon],
   templateUrl: './assignments.html',
   styleUrl: './assignments.css',
+
+  providers: [
+    provideIcons({
+      lucideAlertCircle,
+      lucideCheckCircle,
+    }),
+  ]
 })
+
 export class Assignments implements OnInit {
   assignments = signal<Assignment[]>([]);
   availableAssets = signal<Asset[]>([]);
@@ -181,8 +190,13 @@ export class Assignments implements OnInit {
   }
 
   async assignAsset(): Promise<void> {
-    if (!this.form.asset_id || !this.form.employee_id) {
-      this.errorMessage.set('Select an asset and an employee.');
+    if (!this.form.asset_id) {
+      this.errorMessage.set('Select an asset.');
+      return;
+    }
+
+        if (!this.form.employee_id) {
+      this.errorMessage.set('Select an employee.');
       return;
     }
 
@@ -214,7 +228,7 @@ export class Assignments implements OnInit {
     try {
       const asset = this.availableAssets().find((item) => item.id === this.form.asset_id);
 
-      if (!asset || asset.status !== AssetType.AVAILABLE) {
+      if (!asset || asset.status !== ASSET_TYPES.AVAILABLE) {
         throw new Error('This asset is no longer available for assignment.');
       }
 

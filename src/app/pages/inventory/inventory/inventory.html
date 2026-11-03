@@ -6,33 +6,27 @@
       <p class="mt-1 text-base-content/60">Manage your organization's IT equipment.</p>
     </div>
 
-    
-  <div class="flex flex-wrap gap-2">
-    <button
-      class="btn btn-outline btn-primary"
-      type="button"
-      (click)="openBulkForm()"
-    >
-      <span aria-hidden="true">＋</span> Bulk receive
-    </button>
+    <div class="flex flex-wrap gap-2">
+      <button class="btn btn-outline btn-primary" type="button" (click)="openBulkForm()">
+        <span aria-hidden="true">＋</span> Bulk receive
+      </button>
 
-    <button
-      class="btn btn-primary"
-      type="button"
-      (click)="openForm()"
-    >
-      + Add equipment
-    </button>
-  </div>
-
+      <button class="btn btn-primary" type="button" (click)="openForm()">+ Add equipment</button>
+    </div>
   </header>
 
   @if (successMessage()) {
-    <div class="alert alert-success">{{ successMessage() }}</div>
+    <div class="alert alert-success shadow-sm" role="alert">
+      <span aria-hidden="true">✓</span>
+      <span>{{ successMessage() }}</span>
+    </div>
   }
 
-  @if (errorMessage()) {
-    <div class="alert alert-error">{{ errorMessage() }}</div>
+  @if (pageErrorMessage()) {
+    <div class="alert alert-error shadow-sm" role="alert">
+      <span aria-hidden="true">⚠</span>
+      <span>{{ pageErrorMessage() }}</span>
+    </div>
   }
 
   @if (loading()) {
@@ -72,6 +66,7 @@
             <th>Condition</th>
             <th>Status</th>
             <th>Location</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -92,6 +87,11 @@
                 <span class="badge badge-outline">{{ asset.status }}</span>
               </td>
               <td>{{ asset.office_location || '—' }}</td>
+              <td>
+                <button class="btn btn-ghost btn-sm" type="button" (click)="openEditForm(asset)">
+                  Edit
+                </button>
+              </td>
             </tr>
           } @empty {
             <tr>
@@ -103,21 +103,828 @@
     </div>
   }
 
-  
-@if (showForm()) {
+  @if (showForm()) {
+    <div class="modal modal-open">
+      <div class="modal-box max-h-[90vh] max-w-6xl overflow-y-auto">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold">Add equipment</h2>
+            <p class="mt-1 text-sm text-base-content/60">
+              Record equipment details using the official Inventory of Staff and Assigned Equipment
+              format.
+            </p>
+          </div>
+          <span class="badge badge-primary badge-outline">Single item</span>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="alert alert-error shadow-sm" role="alert">
+            <span aria-hidden="true">⚠</span>
+            <div>
+              <p class="font-semibold">Unable to save equipment</p>
+              <p class="text-sm">{{ errorMessage() }}</p>
+            </div>
+          </div>
+        }
+        <form class="mt-6 space-y-7" (ngSubmit)="saveAsset()">
+          <!-- Section 1: Asset identification -->
+          <section class="space-y-4">
+            <div class="border-b border-base-300 pb-2">
+              <h3 class="text-lg font-semibold">1. Asset Identification</h3>
+              <p class="text-sm text-base-content/60">
+                Internal Asset Tag and official property information.
+              </p>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <label class="form-control">
+                <span class="label-text mb-1">Asset Tag *</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="asset_tag"
+                  [(ngModel)]="form.asset_tag"
+                  required
+                />
+                <span class="label-text-alt mt-1"> Internal AssetDesk identifier (IT-####). </span>
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Property No. *</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="property_no"
+                  [(ngModel)]="form.property_no"
+                  placeholder="e.g. CO-CO2-19-0068"
+                  required
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Equipment Name *</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="name"
+                  [(ngModel)]="form.name"
+                  placeholder="e.g. Lenovo ThinkPad E14, Dell OptiPlex, HP LaserJet Pro"
+                  required
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Category</span>
+                <select
+                  class="select select-bordered w-full"
+                  name="category_id"
+                  [(ngModel)]="form.category_id"
+                >
+                  <option [ngValue]="null">Select category</option>
+                  @for (category of categories(); track category.id) {
+                    <option [ngValue]="category.id">{{ category.name }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Article Description</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="article_description"
+                  [(ngModel)]="form.article_description"
+                  placeholder="Computer Set, Laptop"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Property Status</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="property_status"
+                  [(ngModel)]="form.property_status"
+                  placeholder="e.g. Transferred"
+                />
+              </label>
+            </div>
+          </section>
+
+          <!-- Section 2: Equipment specifications -->
+          <section class="space-y-4">
+            <div class="border-b border-base-300 pb-2">
+              <h3 class="text-lg font-semibold">2. Equipment Specifications</h3>
+              <p class="text-sm text-base-content/60">
+                Record the equipment model and complete technical description.
+              </p>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <label class="form-control">
+                <span class="label-text mb-1">Brand</span>
+                <input class="input input-bordered w-full" name="brand" [(ngModel)]="form.brand" />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Model</span>
+                <input class="input input-bordered w-full" name="model" [(ngModel)]="form.model" />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Serial Number</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="serial_number"
+                  [(ngModel)]="form.serial_number"
+                  placeholder="Enter the real manufacturer serial number"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Unit</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="unit"
+                  [(ngModel)]="form.unit"
+                  placeholder="unit"
+                />
+              </label>
+
+              <label class="form-control md:col-span-2">
+                <span class="label-text mb-1">General Description</span>
+                <textarea
+                  class="textarea textarea-bordered min-h-28 w-full"
+                  name="general_description"
+                  [(ngModel)]="form.general_description"
+                  placeholder="Enter the full technical specifications..."
+                ></textarea>
+              </label>
+            </div>
+          </section>
+
+          <!-- Section 3: Acquisition and warranty -->
+          <section class="space-y-4">
+            <div class="border-b border-base-300 pb-2">
+              <h3 class="text-lg font-semibold">3. Acquisition and Warranty</h3>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <label class="form-control">
+                <span class="label-text mb-1">Fund Code</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="fund_code"
+                  [(ngModel)]="form.fund_code"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Account Code</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="account_code"
+                  [(ngModel)]="form.account_code"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Acquisition Date</span>
+                <input
+                  class="input input-bordered w-full"
+                  type="date"
+                  name="purchase_date"
+                  [(ngModel)]="form.purchase_date"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Acquisition Cost per Unit (PHP)</span>
+                <input
+                  class="input input-bordered w-full"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  name="purchase_cost"
+                  [(ngModel)]="form.purchase_cost"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Supplier</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="supplier"
+                  [(ngModel)]="form.supplier"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Warranty Expiry Date</span>
+                <input
+                  class="input input-bordered w-full"
+                  type="date"
+                  name="warranty_expiry"
+                  [(ngModel)]="form.warranty_expiry"
+                />
+              </label>
+
+              <label class="form-control md:col-span-2">
+                <span class="label-text mb-1">Warranty Details</span>
+                <textarea
+                  class="textarea textarea-bordered w-full"
+                  name="warranty_details"
+                  [(ngModel)]="form.warranty_details"
+                  placeholder="e.g. Three (3) years hardware warranty..."
+                ></textarea>
+              </label>
+            </div>
+          </section>
+
+          <!-- Section 4: Assignment and office -->
+          <section class="space-y-4">
+            <div class="border-b border-base-300 pb-2">
+              <h3 class="text-lg font-semibold">4. Assignment and Office</h3>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <label class="form-control">
+                <span class="label-text mb-1">Status</span>
+                <select
+                  class="select select-bordered w-full"
+                  name="status"
+                  [(ngModel)]="form.status"
+                >
+                  @for (status of statuses; track status) {
+                    <option [ngValue]="status.value">{{ status.name }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Condition</span>
+                <select
+                  class="select select-bordered w-full"
+                  name="condition"
+                  [(ngModel)]="form.condition"
+                >
+                  @for (condition of conditions; track condition) {
+                    <option [ngValue]="condition">{{ condition }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Assigned Employee</span>
+                <select
+                  class="select select-bordered w-full"
+                  name="employee_id"
+                  [(ngModel)]="form.employee_id"
+                  (ngModelChange)="onEmployeeChange()"
+                >
+                  <option [ngValue]="null">Unassigned</option>
+                  @for (employee of employees(); track employee.id) {
+                    <option [ngValue]="employee.id">
+                      {{ employee.full_name }}
+                      {{ employee.employee_no ? '(' + employee.employee_no + ')' : '' }}
+                    </option>
+                  }
+                </select>
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Unit / Section</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="unit_section"
+                  [(ngModel)]="form.unit_section"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Office Location</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="office_location"
+                  [(ngModel)]="form.office_location"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Receiver</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="receiver"
+                  [(ngModel)]="form.receiver"
+                />
+              </label>
+            </div>
+          </section>
+
+          <!-- Section 5: Property accountability -->
+          <section class="space-y-4">
+            <div class="border-b border-base-300 pb-2">
+              <h3 class="text-lg font-semibold">5. Property Accountability</h3>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <label class="form-control">
+                <span class="label-text mb-1">PAR No.</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="par_no"
+                  [(ngModel)]="form.par_no"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">PAR Date</span>
+                <input
+                  class="input input-bordered w-full"
+                  type="date"
+                  name="par_date"
+                  [(ngModel)]="form.par_date"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">SubPAR</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="subpar"
+                  [(ngModel)]="form.subpar"
+                />
+              </label>
+
+              <label class="form-control md:col-span-2">
+                <span class="label-text mb-1">Notes</span>
+                <textarea
+                  class="textarea textarea-bordered w-full"
+                  name="notes"
+                  [(ngModel)]="form.notes"
+                ></textarea>
+              </label>
+            </div>
+          </section>
+
+          <div class="modal-action border-t border-base-300 pt-4">
+            <button class="btn btn-ghost" type="button" (click)="closeForm()" [disabled]="saving()">
+              Cancel
+            </button>
+
+            <button class="btn btn-primary" type="submit" [disabled]="saving()">
+              {{ saving() ? 'Saving...' : 'Save equipment' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <button
+        class="modal-backdrop"
+        type="button"
+        aria-label="Close modal"
+        (click)="closeForm()"
+        [disabled]="saving()"
+      ></button>
+    </div>
+  }
+
+  @if (showBulkForm()) {
+    <div class="modal modal-open">
+      <div class="modal-box max-h-[90vh] max-w-6xl overflow-y-auto">
+        <h2 class="text-2xl font-bold">Bulk Receive Equipment</h2>
+        <p class="mt-1 text-sm text-base-content/60">
+          Enter the shared information once, then provide the Property No. and actual manufacturer
+          serial number for each physical unit.
+        </p>
+
+        <form class="mt-6 space-y-6" (ngSubmit)="saveBulkAssets()">
+          @if (errorMessage()) {
+            <div class="alert alert-error shadow-sm" role="alert">
+              <span aria-hidden="true">⚠</span>
+              <div>
+                <p class="font-semibold">Bulk receiving failed</p>
+                <p class="text-sm">{{ errorMessage() }}</p>
+              </div>
+            </div>
+          }
+          <!-- 1. Asset Identification -->
+          <section class="space-y-4">
+            <div>
+              <h3 class="text-lg font-semibold">1. Asset Identification</h3>
+              <p class="text-sm text-base-content/60">
+                Internal Asset Tags are generated by the database. Enter the official property
+                information for each unit below.
+              </p>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <label class="form-control">
+                <span class="label-text mb-1">Equipment Name *</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="bulk_name"
+                  [(ngModel)]="bulkForm.name"
+                  required
+                  placeholder="e.g. Lenovo ThinkPad E14, Dell OptiPlex, HP LaserJet Pro"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Category</span>
+                <select
+                  class="select select-bordered w-full"
+                  name="bulk_category_id"
+                  [(ngModel)]="bulkForm.category_id"
+                >
+                  <option [ngValue]="null">Select category</option>
+                  @for (category of categories(); track category.id) {
+                    <option [ngValue]="category.id">{{ category.name }}</option>
+                  }
+                </select>
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Article Description</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="bulk_article_description"
+                  [(ngModel)]="bulkForm.article_description"
+                  placeholder="Computer Set, Laptop"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Property Status</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="bulk_property_status"
+                  [(ngModel)]="bulkForm.property_status"
+                  placeholder="Transferred"
+                />
+              </label>
+            </div>
+          </section>
+
+          <div class="divider"></div>
+
+          <!-- 2. Equipment Specifications -->
+          <section class="space-y-4">
+            <h3 class="text-lg font-semibold">2. Equipment Specifications</h3>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <label class="form-control">
+                <span class="label-text mb-1">Brand</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="bulk_brand"
+                  [(ngModel)]="bulkForm.brand"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Model</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="bulk_model"
+                  [(ngModel)]="bulkForm.model"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Unit</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="bulk_unit"
+                  [(ngModel)]="bulkForm.unit"
+                  placeholder="unit"
+                />
+              </label>
+
+              <label class="form-control md:col-span-2">
+                <span class="label-text mb-1">General Description</span>
+                <textarea
+                  class="textarea textarea-bordered w-full"
+                  name="bulk_general_description"
+                  [(ngModel)]="bulkForm.general_description"
+                  placeholder="Enter full technical specifications..."
+                ></textarea>
+              </label>
+            </div>
+          </section>
+
+          <div class="divider"></div>
+
+          <!-- 3. Acquisition and Warranty -->
+          <section class="space-y-4">
+            <h3 class="text-lg font-semibold">3. Acquisition &amp; Warranty</h3>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <label class="form-control">
+                <span class="label-text mb-1">Fund Code</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="bulk_fund_code"
+                  [(ngModel)]="bulkForm.fund_code"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Account Code</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="bulk_account_code"
+                  [(ngModel)]="bulkForm.account_code"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Acquisition Date</span>
+                <input
+                  class="input input-bordered w-full"
+                  type="date"
+                  name="bulk_purchase_date"
+                  [(ngModel)]="bulkForm.purchase_date"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Acquisition Cost per Unit (PHP)</span>
+                <input
+                  class="input input-bordered w-full"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  name="bulk_purchase_cost"
+                  [(ngModel)]="bulkForm.purchase_cost"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Supplier</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="bulk_supplier"
+                  [(ngModel)]="bulkForm.supplier"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Warranty Expiry Date</span>
+                <input
+                  class="input input-bordered w-full"
+                  type="date"
+                  name="bulk_warranty_expiry"
+                  [(ngModel)]="bulkForm.warranty_expiry"
+                />
+              </label>
+
+              <label class="form-control md:col-span-2">
+                <span class="label-text mb-1">Warranty Details</span>
+                <textarea
+                  class="textarea textarea-bordered w-full"
+                  name="bulk_warranty_details"
+                  [(ngModel)]="bulkForm.warranty_details"
+                  placeholder="Three (3) years hardware warranty..."
+                ></textarea>
+              </label>
+            </div>
+          </section>
+
+          <div class="divider"></div>
+
+          <!-- 4. Assignment and Office -->
+          <section class="space-y-4">
+            <h3 class="text-lg font-semibold">4. Assignment &amp; Office</h3>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <label class="form-control">
+                <span class="label-text mb-1">Status</span>
+                <select
+                  class="select select-bordered w-full"
+                  name="bulk_status"
+                  [(ngModel)]="bulkForm.status"
+                >
+                  <option value="available">Available</option>
+                  <option value="assigned">Assigned</option>
+                  <option value="under_repair">Under Repair</option>
+                  <option value="retired">Retired</option>
+                  <option value="disposed">Disposed</option>
+                </select>
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Condition</span>
+                <select
+                  class="select select-bordered w-full"
+                  name="bulk_condition"
+                  [(ngModel)]="bulkForm.condition"
+                >
+                  <option value="excellent">Excellent</option>
+                  <option value="good">Good</option>
+                  <option value="fair">Fair</option>
+                  <option value="poor">Poor</option>
+                </select>
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Unit / Section</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="bulk_unit_section"
+                  [(ngModel)]="bulkForm.unit_section"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Office Location</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="bulk_office_location"
+                  [(ngModel)]="bulkForm.office_location"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Receiver</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="bulk_receiver"
+                  [(ngModel)]="bulkForm.receiver"
+                />
+              </label>
+            </div>
+          </section>
+
+          <div class="divider"></div>
+
+          <!-- 5. Property Accountability -->
+          <section class="space-y-4">
+            <h3 class="text-lg font-semibold">5. Property Accountability</h3>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <label class="form-control">
+                <span class="label-text mb-1">PAR No.</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="bulk_par_no"
+                  [(ngModel)]="bulkForm.par_no"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">PAR Date</span>
+                <input
+                  class="input input-bordered w-full"
+                  type="date"
+                  name="bulk_par_date"
+                  [(ngModel)]="bulkForm.par_date"
+                />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">SubPAR</span>
+                <input
+                  class="input input-bordered w-full"
+                  name="bulk_subpar"
+                  [(ngModel)]="bulkForm.subpar"
+                />
+              </label>
+            </div>
+          </section>
+
+          <div class="divider"></div>
+
+          <!-- 6. Individual Unit Details -->
+          <section class="space-y-4">
+            <div class="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h3 class="text-lg font-semibold">6. Individual Unit Details</h3>
+                <p class="text-sm text-base-content/60">
+                  Enter a separate official Property No. and actual manufacturer serial number for
+                  every physical unit.
+                </p>
+              </div>
+
+              <label class="form-control w-36">
+                <span class="label-text mb-1">Quantity *</span>
+                <input
+                  class="input input-bordered w-full"
+                  type="number"
+                  name="bulk_quantity"
+                  min="1"
+                  max="500"
+                  [ngModel]="bulkQuantity"
+                  (ngModelChange)="updateBulkQuantity($event)"
+                  required
+                />
+              </label>
+            </div>
+
+            @for (item of bulkItems; track $index; let i = $index) {
+              <div class="rounded-box border border-base-300 p-4">
+                <h4 class="mb-3 font-semibold">Unit {{ i + 1 }}</h4>
+
+                <div class="grid gap-4 md:grid-cols-2">
+                  <label class="form-control">
+                    <span class="label-text mb-1">Official Property No. *</span>
+                    <input
+                      class="input input-bordered w-full"
+                      [name]="'property_no_' + i"
+                      [(ngModel)]="item.property_no"
+                      placeholder="e.g. CO-CO2-19-0068"
+                      required
+                    />
+                  </label>
+
+                  <label class="form-control">
+                    <span class="label-text mb-1">Manufacturer Serial Number *</span>
+                    <input
+                      class="input input-bordered w-full"
+                      [name]="'serial_number_' + i"
+                      [(ngModel)]="item.serial_number"
+                      placeholder="Enter the actual serial number"
+                      required
+                    />
+                  </label>
+                </div>
+
+                <p class="mt-3 text-sm text-base-content/60">
+                  Internal Asset Tag: assigned automatically by the database when the batch is
+                  saved.
+                </p>
+              </div>
+            }
+          </section>
+
+          <div class="divider"></div>
+
+          <!-- Additional Notes -->
+          <section class="space-y-2">
+            <h3 class="text-lg font-semibold">Additional Notes</h3>
+            <textarea
+              class="textarea textarea-bordered w-full"
+              name="bulk_notes"
+              [(ngModel)]="bulkForm.notes"
+              placeholder="Enter remarks or other relevant information..."
+            ></textarea>
+          </section>
+
+          <div class="alert alert-info">
+            <span>
+              Each unit receives its own database-generated Asset Tag. Property Numbers and serial
+              numbers must be unique within the batch. The database validates duplicates before
+              saving.
+            </span>
+          </div>
+
+          <div class="modal-action">
+            <button
+              class="btn btn-ghost"
+              type="button"
+              (click)="closeBulkForm()"
+              [disabled]="saving()"
+            >
+              Cancel
+            </button>
+
+            <button class="btn btn-primary" type="submit" [disabled]="saving()">
+              {{ saving() ? 'Receiving equipment...' : 'Save all units' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <button
+        class="modal-backdrop"
+        type="button"
+        aria-label="Close bulk receiving"
+        (click)="closeBulkForm()"
+        [disabled]="saving()"
+      ></button>
+    </div>
+  }
+</section>
+
+@if (showEditForm()) {
   <div class="modal modal-open">
     <div class="modal-box max-h-[90vh] max-w-6xl overflow-y-auto">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-bold">Add equipment</h2>
+          <h2 class="text-2xl font-bold">Edit equipment</h2>
           <p class="mt-1 text-sm text-base-content/60">
-            Record equipment details using the official Inventory of Staff and Assigned Equipment format.
+            Edit equipment details using the official Inventory of Staff and Assigned Equipment
+            format.
           </p>
         </div>
         <span class="badge badge-primary badge-outline">Single item</span>
       </div>
 
       <form class="mt-6 space-y-7" (ngSubmit)="saveAsset()">
+        @if (errorMessage()) {
+          <div class="alert alert-error shadow-sm" role="alert">
+            <span aria-hidden="true">⚠</span>
+            <div>
+              <p class="font-semibold">Unable to save equipment</p>
+              <p class="text-sm">{{ errorMessage() }}</p>
+            </div>
+          </div>
+        }
 
         <!-- Section 1: Asset identification -->
         <section class="space-y-4">
@@ -137,9 +944,7 @@
                 [(ngModel)]="form.asset_tag"
                 required
               />
-              <span class="label-text-alt mt-1">
-                Internal AssetDesk identifier (IT-####).
-              </span>
+              <span class="label-text-alt mt-1"> Internal AssetDesk identifier (IT-####). </span>
             </label>
 
             <label class="form-control">
@@ -212,20 +1017,12 @@
           <div class="grid gap-4 md:grid-cols-2">
             <label class="form-control">
               <span class="label-text mb-1">Brand</span>
-              <input
-                class="input input-bordered w-full"
-                name="brand"
-                [(ngModel)]="form.brand"
-              />
+              <input class="input input-bordered w-full" name="brand" [(ngModel)]="form.brand" />
             </label>
 
             <label class="form-control">
               <span class="label-text mb-1">Model</span>
-              <input
-                class="input input-bordered w-full"
-                name="model"
-                [(ngModel)]="form.model"
-              />
+              <input class="input input-bordered w-full" name="model" [(ngModel)]="form.model" />
             </label>
 
             <label class="form-control">
@@ -347,11 +1144,7 @@
           <div class="grid gap-4 md:grid-cols-2">
             <label class="form-control">
               <span class="label-text mb-1">Status</span>
-              <select
-                class="select select-bordered w-full"
-                name="status"
-                [(ngModel)]="form.status"
-              >
+              <select class="select select-bordered w-full" name="status" [(ngModel)]="form.status">
                 @for (status of statuses; track status) {
                   <option [ngValue]="status.value">{{ status.name }}</option>
                 }
@@ -427,11 +1220,7 @@
           <div class="grid gap-4 md:grid-cols-2">
             <label class="form-control">
               <span class="label-text mb-1">PAR No.</span>
-              <input
-                class="input input-bordered w-full"
-                name="par_no"
-                [(ngModel)]="form.par_no"
-              />
+              <input class="input input-bordered w-full" name="par_no" [(ngModel)]="form.par_no" />
             </label>
 
             <label class="form-control">
@@ -446,11 +1235,7 @@
 
             <label class="form-control">
               <span class="label-text mb-1">SubPAR</span>
-              <input
-                class="input input-bordered w-full"
-                name="subpar"
-                [(ngModel)]="form.subpar"
-              />
+              <input class="input input-bordered w-full" name="subpar" [(ngModel)]="form.subpar" />
             </label>
 
             <label class="form-control md:col-span-2">
@@ -468,14 +1253,14 @@
           <button
             class="btn btn-ghost"
             type="button"
-            (click)="closeForm()"
+            (click)="closeEditForm()"
             [disabled]="saving()"
           >
             Cancel
           </button>
 
           <button class="btn btn-primary" type="submit" [disabled]="saving()">
-            {{ saving() ? 'Saving...' : 'Save equipment' }}
+            {{ saving() ? 'Updating...' : 'Update equipment' }}
           </button>
         </div>
       </form>
@@ -484,425 +1269,9 @@
     <button
       class="modal-backdrop"
       type="button"
-      aria-label="Close modal"
-      (click)="closeForm()"
+      aria-label="Close edit modal"
+      (click)="closeEditForm()"
       [disabled]="saving()"
     ></button>
   </div>
 }
-
-
-@if (showBulkForm()) {
-  <div class="modal modal-open">
-    <div class="modal-box max-h-[90vh] max-w-6xl overflow-y-auto">
-      <h2 class="text-2xl font-bold">Bulk Receive Equipment</h2>
-      <p class="mt-1 text-sm text-base-content/60">
-        Enter the shared information once, then provide the Property No.
-        and actual manufacturer serial number for each physical unit.
-      </p>
-
-      <form class="mt-6 space-y-6" (ngSubmit)="saveBulkAssets()">
-
-        <!-- 1. Asset Identification -->
-        <section class="space-y-4">
-          <div>
-            <h3 class="text-lg font-semibold">1. Asset Identification</h3>
-            <p class="text-sm text-base-content/60">
-              Internal Asset Tags are generated by the database.
-              Enter the official property information for each unit below.
-            </p>
-          </div>
-
-          <div class="grid gap-4 md:grid-cols-2">
-            <label class="form-control">
-              <span class="label-text mb-1">Equipment Name *</span>
-              <input
-                class="input input-bordered w-full"
-                name="bulk_name"
-                [(ngModel)]="bulkForm.name"
-                required
-                placeholder="e.g. Lenovo ThinkPad E14, Dell OptiPlex, HP LaserJet Pro"
-              />
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">Category</span>
-              <select
-                class="select select-bordered w-full"
-                name="bulk_category_id"
-                [(ngModel)]="bulkForm.category_id"
-              >
-                <option [ngValue]="null">Select category</option>
-                @for (category of categories(); track category.id) {
-                  <option [ngValue]="category.id">{{ category.name }}</option>
-                }
-              </select>
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">Article Description</span>
-              <input
-                class="input input-bordered w-full"
-                name="bulk_article_description"
-                [(ngModel)]="bulkForm.article_description"
-                placeholder="Computer Set, Laptop"
-              />
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">Property Status</span>
-              <input
-                class="input input-bordered w-full"
-                name="bulk_property_status"
-                [(ngModel)]="bulkForm.property_status"
-                placeholder="Transferred"
-              />
-            </label>
-          </div>
-        </section>
-
-        <div class="divider"></div>
-
-        <!-- 2. Equipment Specifications -->
-        <section class="space-y-4">
-          <h3 class="text-lg font-semibold">2. Equipment Specifications</h3>
-
-          <div class="grid gap-4 md:grid-cols-2">
-            <label class="form-control">
-              <span class="label-text mb-1">Brand</span>
-              <input
-                class="input input-bordered w-full"
-                name="bulk_brand"
-                [(ngModel)]="bulkForm.brand"
-              />
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">Model</span>
-              <input
-                class="input input-bordered w-full"
-                name="bulk_model"
-                [(ngModel)]="bulkForm.model"
-              />
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">Unit</span>
-              <input
-                class="input input-bordered w-full"
-                name="bulk_unit"
-                [(ngModel)]="bulkForm.unit"
-                placeholder="unit"
-              />
-            </label>
-
-            <label class="form-control md:col-span-2">
-              <span class="label-text mb-1">General Description</span>
-              <textarea
-                class="textarea textarea-bordered w-full"
-                name="bulk_general_description"
-                [(ngModel)]="bulkForm.general_description"
-                placeholder="Enter full technical specifications..."
-              ></textarea>
-            </label>
-          </div>
-        </section>
-
-        <div class="divider"></div>
-
-        <!-- 3. Acquisition and Warranty -->
-        <section class="space-y-4">
-          <h3 class="text-lg font-semibold">3. Acquisition &amp; Warranty</h3>
-
-          <div class="grid gap-4 md:grid-cols-2">
-            <label class="form-control">
-              <span class="label-text mb-1">Fund Code</span>
-              <input
-                class="input input-bordered w-full"
-                name="bulk_fund_code"
-                [(ngModel)]="bulkForm.fund_code"
-              />
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">Account Code</span>
-              <input
-                class="input input-bordered w-full"
-                name="bulk_account_code"
-                [(ngModel)]="bulkForm.account_code"
-              />
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">Acquisition Date</span>
-              <input
-                class="input input-bordered w-full"
-                type="date"
-                name="bulk_purchase_date"
-                [(ngModel)]="bulkForm.purchase_date"
-              />
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">Acquisition Cost per Unit (PHP)</span>
-              <input
-                class="input input-bordered w-full"
-                type="number"
-                min="0"
-                step="0.01"
-                name="bulk_purchase_cost"
-                [(ngModel)]="bulkForm.purchase_cost"
-              />
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">Supplier</span>
-              <input
-                class="input input-bordered w-full"
-                name="bulk_supplier"
-                [(ngModel)]="bulkForm.supplier"
-              />
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">Warranty Expiry Date</span>
-              <input
-                class="input input-bordered w-full"
-                type="date"
-                name="bulk_warranty_expiry"
-                [(ngModel)]="bulkForm.warranty_expiry"
-              />
-            </label>
-
-            <label class="form-control md:col-span-2">
-              <span class="label-text mb-1">Warranty Details</span>
-              <textarea
-                class="textarea textarea-bordered w-full"
-                name="bulk_warranty_details"
-                [(ngModel)]="bulkForm.warranty_details"
-                placeholder="Three (3) years hardware warranty..."
-              ></textarea>
-            </label>
-          </div>
-        </section>
-
-        <div class="divider"></div>
-
-        <!-- 4. Assignment and Office -->
-        <section class="space-y-4">
-          <h3 class="text-lg font-semibold">4. Assignment &amp; Office</h3>
-
-          <div class="grid gap-4 md:grid-cols-2">
-
-            <label class="form-control">
-              <span class="label-text mb-1">Status</span>
-              <select
-                class="select select-bordered w-full"
-                name="bulk_status"
-                [(ngModel)]="bulkForm.status"
-              >
-                <option value="available">Available</option>
-                <option value="assigned">Assigned</option>
-                <option value="under_repair">Under Repair</option>
-                <option value="retired">Retired</option>
-                <option value="disposed">Disposed</option>
-              </select>
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">Condition</span>
-              <select
-                class="select select-bordered w-full"
-                name="bulk_condition"
-                [(ngModel)]="bulkForm.condition"
-              >
-                <option value="excellent">Excellent</option>
-                <option value="good">Good</option>
-                <option value="fair">Fair</option>
-                <option value="poor">Poor</option>
-              </select>
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">Unit / Section</span>
-              <input
-                class="input input-bordered w-full"
-                name="bulk_unit_section"
-                [(ngModel)]="bulkForm.unit_section"
-              />
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">Office Location</span>
-              <input
-                class="input input-bordered w-full"
-                name="bulk_office_location"
-                [(ngModel)]="bulkForm.office_location"
-              />
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">Receiver</span>
-              <input
-                class="input input-bordered w-full"
-                name="bulk_receiver"
-                [(ngModel)]="bulkForm.receiver"
-              />
-            </label>
-          </div>
-        </section>
-
-        <div class="divider"></div>
-
-        <!-- 5. Property Accountability -->
-        <section class="space-y-4">
-          <h3 class="text-lg font-semibold">5. Property Accountability</h3>
-
-          <div class="grid gap-4 md:grid-cols-2">
-            <label class="form-control">
-              <span class="label-text mb-1">PAR No.</span>
-              <input
-                class="input input-bordered w-full"
-                name="bulk_par_no"
-                [(ngModel)]="bulkForm.par_no"
-              />
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">PAR Date</span>
-              <input
-                class="input input-bordered w-full"
-                type="date"
-                name="bulk_par_date"
-                [(ngModel)]="bulkForm.par_date"
-              />
-            </label>
-
-            <label class="form-control">
-              <span class="label-text mb-1">SubPAR</span>
-              <input
-                class="input input-bordered w-full"
-                name="bulk_subpar"
-                [(ngModel)]="bulkForm.subpar"
-              />
-            </label>
-          </div>
-        </section>
-
-        <div class="divider"></div>
-
-        <!-- 6. Individual Unit Details -->
-        <section class="space-y-4">
-          <div class="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h3 class="text-lg font-semibold">6. Individual Unit Details</h3>
-              <p class="text-sm text-base-content/60">
-                Enter a separate official Property No. and actual manufacturer
-                serial number for every physical unit.
-              </p>
-            </div>
-
-            <label class="form-control w-36">
-              <span class="label-text mb-1">Quantity *</span>
-              <input
-                class="input input-bordered w-full"
-                type="number"
-                name="bulk_quantity"
-                min="1"
-                max="500"
-                [ngModel]="bulkQuantity"
-                (ngModelChange)="updateBulkQuantity($event)"
-                required
-              />
-            </label>
-          </div>
-
-          @for (item of bulkItems; track $index; let i = $index) {
-            <div class="rounded-box border border-base-300 p-4">
-              <h4 class="mb-3 font-semibold">Unit {{ i + 1 }}</h4>
-
-              <div class="grid gap-4 md:grid-cols-2">
-                <label class="form-control">
-                  <span class="label-text mb-1">Official Property No. *</span>
-                  <input
-                    class="input input-bordered w-full"
-                    [name]="'property_no_' + i"
-                    [(ngModel)]="item.property_no"
-                    placeholder="e.g. CO-CO2-19-0068"
-                    required
-                  />
-                </label>
-
-                <label class="form-control">
-                  <span class="label-text mb-1">Manufacturer Serial Number *</span>
-                  <input
-                    class="input input-bordered w-full"
-                    [name]="'serial_number_' + i"
-                    [(ngModel)]="item.serial_number"
-                    placeholder="Enter the actual serial number"
-                    required
-                  />
-                </label>
-              </div>
-
-              <p class="mt-3 text-sm text-base-content/60">
-                Internal Asset Tag: assigned automatically by the database
-                when the batch is saved.
-              </p>
-            </div>
-          }
-        </section>
-
-        <div class="divider"></div>
-
-        <!-- Additional Notes -->
-        <section class="space-y-2">
-          <h3 class="text-lg font-semibold">Additional Notes</h3>
-          <textarea
-            class="textarea textarea-bordered w-full"
-            name="bulk_notes"
-            [(ngModel)]="bulkForm.notes"
-            placeholder="Enter remarks or other relevant information..."
-          ></textarea>
-        </section>
-
-        <div class="alert alert-info">
-          <span>
-            Each unit receives its own database-generated Asset Tag.
-            Property Numbers and serial numbers must be unique within the batch.
-            The database validates duplicates before saving.
-          </span>
-        </div>
-
-        <div class="modal-action">
-          <button
-            class="btn btn-ghost"
-            type="button"
-            (click)="closeBulkForm()"
-            [disabled]="saving()"
-          >
-            Cancel
-          </button>
-
-          <button
-            class="btn btn-primary"
-            type="submit"
-            [disabled]="saving()"
-          >
-            {{ saving() ? 'Receiving equipment...' : 'Save all units' }}
-          </button>
-        </div>
-      </form>
-    </div>
-
-    <button
-      class="modal-backdrop"
-      type="button"
-      aria-label="Close bulk receiving"
-      (click)="closeBulkForm()"
-      [disabled]="saving()"
-    ></button>
-  </div>
-}
-
-</section>
