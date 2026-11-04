@@ -1,0 +1,167 @@
+
+<div class="login-page">
+  <div class="login-card">
+
+    <div class="brand">
+      <div class="brand-icon">A</div>
+      <h1>PMB AssetDesk</h1>
+      <p>IT Equipment Inventory Management System</p>
+    </div>
+
+    @if (!registrationSubmitted) {
+      <div class="login-heading">
+        <h2>Create Account</h2>
+        <p>Register using your authorized employee information.</p>
+      </div>
+    } @else {
+      <div class="login-heading">
+        <h2>Check Your Email</h2>
+        <p>One more step to activate your AssetDesk account.</p>
+      </div>
+    }
+
+    @if (errorMessage) {
+      <div class="alert alert-error mb-4">
+        {{ errorMessage }}
+      </div>
+    }
+
+    @if (successMessage) {
+      <div class="alert alert-success mb-4">
+        {{ successMessage }}
+      </div>
+    }
+
+    @if (!registrationSubmitted) {
+      <form (ngSubmit)="signup()">
+
+        <div class="form-control">
+          <label for="employeeNo" class="label">
+            <span class="label-text">Employee Number</span><span class="text-error">*</span>
+          </label>
+
+          <input
+            id="employeeNo"
+            type="text"
+            name="employeeNo"
+            class="input input-bordered"
+            placeholder="Enter your employee number"
+            [(ngModel)]="employeeNo"
+            autocomplete="off"
+            required
+          />
+        </div>
+
+        <div class="form-control">
+          <label for="email" class="label">
+            <span class="label-text">Registered Email Address</span><span class="text-error">*</span>
+          </label>
+
+          <input
+            id="email"
+            type="email"
+            name="email"
+            class="input input-bordered"
+            placeholder="Enter your registered email"
+            [(ngModel)]="email"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="form-control">
+          <label for="password" class="label">
+            <span class="label-text">Password</span><span class="text-error">*</span>
+          </label>
+
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            name="password"
+            class="input input-bordered"
+            placeholder="Create your password"
+            [(ngModel)]="password"
+            autocomplete="new-password"
+            required
+          />
+        </div>
+
+        <div class="form-control">
+          <label for="confirmPassword" class="label">
+            <span class="label-text">Confirm Password</span><span class="text-error">*</span>
+          </label>
+
+          <input
+            id="confirmPassword"
+            [type]="showPassword ? 'text' : 'password'"
+            name="confirmPassword"
+            class="input input-bordered"
+            placeholder="Confirm your password"
+            [(ngModel)]="confirmPassword"
+            autocomplete="new-password"
+            required
+          />
+        </div>
+
+        <label class="label cursor-pointer justify-start gap-2 mb-3">
+          <input
+            type="checkbox"
+            class="checkbox checkbox-sm"
+            [(ngModel)]="showPassword"
+            name="showPassword"
+          />
+          <span class="label-text">Show password</span>
+        </label>
+
+        <button
+          type="submit"
+          class="btn btn-primary login-button"
+          [disabled]="loading"
+        >
+          @if (loading) {
+            <span class="loading loading-spinner loading-sm"></span>
+            Creating account...
+          } @else {
+            Sign Up
+          }
+        </button>
+
+      </form>
+    } @else {
+      <div class="space-y-4">
+        <div class="text-center text-base-content/60">
+          <p>Please check your inbox for the account verification email.</p>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-primary login-button"
+          (click)="backToLogin()"
+        >
+          Back to Login
+        </button>
+      </div>
+    }
+
+    @if (!registrationSubmitted) {
+      <div class="text-center mt-5">
+        <span class="text-sm text-base-content/60">
+          Already have an account?
+        </span>
+
+        <button
+          type="button"
+          class="link link-primary text-sm ml-1"
+          (click)="backToLogin()"
+        >
+          Sign In
+        </button>
+      </div>
+    }
+
+    <div class="login-footer">
+      <p>AssetDesk · IT Equipment Management</p>
+    </div>
+
+  </div>
+</div>

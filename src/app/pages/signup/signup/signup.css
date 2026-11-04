@@ -1,0 +1,5 @@
+@import '../../login/login/login.css';
+
+.login-card {
+  max-width: 460px;
+}

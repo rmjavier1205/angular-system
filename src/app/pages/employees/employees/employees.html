@@ -62,7 +62,7 @@
         <div class="p-12 text-center text-base-content/60">No employees found.</div>
       } @else {
         <div class="overflow-x-auto">
-          <table class="table table-zebra">
+          <table class="table table-zebra text-center">
             <thead>
               <tr>
                 <th>Employee No.</th>
@@ -73,6 +73,7 @@
                 <th>Status</th>
                 <th>Issuer Authorization</th>
                 <th>Actions</th>
+                <th>Registration Access</th>
               </tr>
             </thead>
 
@@ -151,6 +152,13 @@
                       }
                     </div>
                   </td>
+                  <td>
+                    @if (employee.can_register && employee.active) {
+                      <span class="badge badge-success">Authorized</span>
+                    } @else {
+                      <span class="badge badge-ghost">Not authorized</span>
+                    }
+                  </td>
                 </tr>
               }
             </tbody>
@@ -171,7 +179,7 @@
       <form class="mt-5 space-y-4" (ngSubmit)="saveEmployee()">
         <div class="grid gap-4 sm:grid-cols-2">
           <label class="form-control">
-            <span class="label-text mb-2">Employee number</span>
+            <span class="label-text mb-2">Employee number</span><span class="text-error">*</span>
             <input
               class="input input-bordered"
               name="employee_no"
@@ -181,7 +189,7 @@
           </label>
 
           <label class="form-control">
-            <span class="label-text mb-2">Full name *</span>
+            <span class="label-text mb-2">Full name</span><span class="text-error">*</span>
             <input
               class="input input-bordered"
               name="full_name"
@@ -192,7 +200,7 @@
           </label>
 
           <label class="form-control">
-            <span class="label-text mb-2">Unit / Section</span>
+            <span class="label-text mb-2">Unit / Section</span><span class="text-error">*</span>
             <input
               class="input input-bordered"
               name="unit_section"
@@ -202,7 +210,7 @@
           </label>
 
           <label class="form-control">
-            <span class="label-text mb-2">Office Location</span>
+            <span class="label-text mb-2">Office Location</span><span class="text-error">*</span>
             <input
               class="input input-bordered"
               name="office_location"
@@ -212,7 +220,7 @@
           </label>
 
           <label class="form-control">
-            <span class="label-text mb-2">Work Assignment</span>
+            <span class="label-text mb-2">Work Assignment</span><span class="text-error">*</span>
             <textarea
               class="textarea textarea-bordered w-full"
               name="work_assignment"
@@ -222,7 +230,7 @@
           </label>
 
           <label class="form-control">
-            <span class="label-text mb-2">Email</span>
+            <span class="label-text mb-2">Email</span><span class="text-error">*</span>
             <input
               class="input input-bordered"
               type="email"
@@ -239,8 +247,24 @@
               name="active"
               [(ngModel)]="form.active"
             />
-            <span class="label-text">Active employee</span>
+            <span class="label-text">Active employee</span><span class="text-error">*</span>
           </label>
+
+          @if (isAdmin()) {
+            <label class="label cursor-pointer justify-start gap-3 sm:col-span-2">
+              <input
+                class="checkbox checkbox-primary"
+                type="checkbox"
+                name="can_register"
+                [(ngModel)]="form.can_register"
+                [disabled]="!form.active"
+              />
+
+              <span class="label-text">
+                Allow this employee to register for AssetDesk
+              </span>
+            </label>
+          }
         </div>
 
         <div class="modal-action">

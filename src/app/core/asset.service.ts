@@ -109,7 +109,7 @@ export class AssetService {
     const { data, error } = await supabase
       .from('employees')
       .select(
-        'id, employee_no, full_name, unit_section, office_location, work_assignment, email, active',
+        'id, employee_no, full_name, unit_section, office_location, work_assignment, email, active, can_register',
       )
       .eq('active', true)
       .order('full_name');

@@ -70,6 +70,7 @@ export interface Employee {
   work_assignment: string | null;
   email: string | null;
   active: boolean;
+  can_register: boolean;
 }
 
 export interface AuthorizedIssuer {

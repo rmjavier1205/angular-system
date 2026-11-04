@@ -1,12 +1,13 @@
 
 import { Routes } from '@angular/router';
 import { AppLayoutComponent } from './layout/app-layout/app-layout';
-
+import { authGuard } from './core/auth.guard';
 
 export const routes: Routes = [
   {
     path: '',
     component: AppLayoutComponent,
+    canActivate: [authGuard],
     children: [
       {
         path: 'dashboard',
@@ -56,7 +57,22 @@ export const routes: Routes = [
       import('./pages/login/login/login').then((m) => m.Login),
   },
   {
+    path: 'signup',
+    loadComponent: () =>
+      import('./pages/signup/signup/signup').then(
+        (m) => m.Signup
+      ),
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./pages/reset-password/reset-password').then(
+        (m) => m.ResetPassword
+      ),
+  },
+  {
     path: '**',
     redirectTo: 'dashboard',
   },
+
 ];

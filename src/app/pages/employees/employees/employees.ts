@@ -39,6 +39,7 @@ export class Employees implements OnInit {
     work_assignment: '',
     email: '',
     active: true,
+    can_register: false,
   };
 
   ngOnInit(): void {
@@ -112,7 +113,7 @@ export class Employees implements OnInit {
     try {
       const { data, error } = await supabase
         .from('employees')
-        .select('id, employee_no, full_name, unit_section, office_location, email, active')
+        .select('id, employee_no, full_name, unit_section, office_location, email, active, can_register')
         .order('full_name');
 
       if (error) throw error;
@@ -235,6 +236,7 @@ export class Employees implements OnInit {
       work_assignment: employee.work_assignment ?? '',
       email: employee.email ?? '',
       active: employee.active,
+      can_register: employee.can_register?? false,
     };
 
     this.editingId.set(employee.id);
@@ -264,6 +266,10 @@ export class Employees implements OnInit {
       office_location: this.form.office_location.trim() || null,
       email: this.form.email.trim() || null,
       active: this.form.active,
+
+        ...(this.isAdmin()
+      ? { can_register: this.form.active && this.form.can_register }
+      : {}),
     };
 
     try {
@@ -355,6 +361,7 @@ export class Employees implements OnInit {
       work_assignment: '',
       email: '',
       active: true,
+      can_register: false,
     };
   }
 }
