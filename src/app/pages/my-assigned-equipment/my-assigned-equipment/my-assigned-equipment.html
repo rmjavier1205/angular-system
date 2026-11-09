@@ -1,0 +1,207 @@
+<div class="space-y-6">
+
+  <!-- PAGE HEADER -->
+  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">
+        My Assigned Equipment
+      </h1>
+
+      <p class="mt-1 text-sm text-slate-500">
+        View and monitor IT equipment assigned to you.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="btn btn-outline btn-primary"
+      (click)="loadEquipment()"
+      [disabled]="loading()"
+    >
+      @if (loading()) {
+        <span class="loading loading-spinner loading-xs"></span>
+      } @else {
+        <span>↻</span>
+      }
+      Refresh
+    </button>
+
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <p class="text-sm font-medium text-slate-500">
+        Total Assigned Equipment
+      </p>
+
+      <p class="mt-2 text-3xl font-bold text-slate-800">
+        {{ totalEquipment }}
+      </p>
+
+      <p class="mt-1 text-xs text-slate-400">
+        Currently assigned to you
+      </p>
+    </div>
+
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <p class="text-sm font-medium text-slate-500">
+        Good / Excellent Condition
+      </p>
+
+      <p class="mt-2 text-3xl font-bold text-emerald-600">
+        {{ equipmentInGoodCondition }}
+      </p>
+
+      <p class="mt-1 text-xs text-slate-400">
+        Based on recorded equipment condition
+      </p>
+    </div>
+
+  </div>
+
+  <!-- SEARCH -->
+  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+      <div>
+        <h2 class="font-semibold text-slate-800">
+          Equipment List
+        </h2>
+
+        <p class="text-xs text-slate-500">
+          Your currently assigned IT equipment
+        </p>
+      </div>
+
+      <input
+        type="text"
+        class="input input-bordered w-full sm:max-w-sm"
+        placeholder="Search asset tag, name, serial number..."
+        [value]="searchTerm()"
+        (input)="searchTerm.set($any($event.target).value)"
+      />
+
+    </div>
+
+    <!-- LOADING -->
+    @if (loading() && equipment().length === 0) {
+
+      <div class="flex justify-center py-16">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+
+    }
+
+    <!-- ERROR -->
+    @else if (errorMessage()) {
+
+      <div class="alert alert-error mt-5">
+        {{ errorMessage() }}
+      </div>
+
+    }
+
+    <!-- EMPTY -->
+    @else if (equipment().length === 0) {
+
+      <div class="py-16 text-center">
+
+        <div class="mb-3 text-5xl">💻</div>
+
+        <h3 class="font-semibold text-slate-700">
+          No Assigned Equipment
+        </h3>
+
+        <p class="mt-1 text-sm text-slate-500">
+          There is currently no equipment assigned to your account.
+        </p>
+
+      </div>
+
+    }
+
+    <!-- NO SEARCH RESULTS -->
+    @else if (filteredEquipment.length === 0) {
+
+      <div class="py-12 text-center text-sm text-slate-500">
+        No equipment matches your search.
+      </div>
+
+    }
+
+    <!-- EQUIPMENT TABLE -->
+    @else {
+
+      <div class="mt-5 overflow-x-auto">
+
+        <table class="table w-full">
+
+          <thead>
+            <tr class="bg-slate-50 text-xs uppercase text-slate-500">
+              <th>Asset</th>
+              <th>Asset Tag</th>
+              <th>Serial Number</th>
+              <th>Property Number</th>
+              <th>Condition</th>
+              <th>Assigned Date</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            @for (item of filteredEquipment; track item.assignment_id) {
+
+              <tr class="hover:bg-slate-50">
+
+                <td>
+                  <div class="font-semibold text-slate-800">
+                    {{ item.asset_name || 'Unnamed Equipment' }}
+                  </div>
+
+                  <div class="text-xs text-slate-500">
+                    {{ item.brand || '' }}
+                    {{ item.model || '' }}
+                  </div>
+                </td>
+
+                <td class="font-medium text-slate-700">
+                  {{ item.asset_tag || 'N/A' }}
+                </td>
+
+                <td class="text-sm">
+                  {{ item.serial_number || 'N/A' }}
+                </td>
+
+                <td class="text-sm">
+                  {{ item.property_no || 'N/A' }}
+                </td>
+
+                <td>
+                  <span class="badge badge-outline">
+                    {{ formatCondition(item.current_condition) }}
+                  </span>
+                </td>
+
+                <td class="text-sm">
+                  {{ formatDate(item.assigned_at) }}
+                </td>
+
+              </tr>
+
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    }
+
+  </div>
+
+</div>

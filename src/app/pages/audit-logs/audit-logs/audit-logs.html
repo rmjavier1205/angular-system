@@ -1,0 +1,317 @@
+<section class="space-y-6">
+  <!-- HEADER -->
+  <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <p class="text-xs font-semibold tracking-widest text-base-content/50">SYSTEM MANAGEMENT</p>
+      <h1 class="text-2xl font-bold">Audit Logs</h1>
+      <p class="text-sm text-base-content/60 mt-1">
+        Review system activities and changes made by users.
+      </p>
+    </div>
+
+    <button
+      class="btn btn-outline btn-sm"
+      type="button"
+      (click)="loadAuditLogs()"
+      [disabled]="loading()"
+    >
+      @if (loading()) {
+        <span class="loading loading-spinner loading-xs"></span>
+        Refreshing...
+      } @else {
+        ↻ Refresh
+      }
+    </button>
+  </header>
+
+  <!-- SUMMARY -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <article class="stat bg-base-100 border border-base-300 rounded-box">
+      <div class="stat-title">Loaded Audit Records</div>
+      <div class="stat-value text-2xl">{{ activities().length }}</div>
+      <div class="stat-desc">Latest records retrieved</div>
+    </article>
+
+    <article class="stat bg-base-100 border border-base-300 rounded-box">
+      <div class="stat-title">Insertions</div>
+      <div class="stat-value text-2xl text-success">
+        {{ activities().filter((item) => item.action.toUpperCase() === 'INSERT').length }}
+      </div>
+      <div class="stat-desc">Records created</div>
+    </article>
+
+    <article class="stat bg-base-100 border border-base-300 rounded-box">
+      <div class="stat-title">Updates</div>
+      <div class="stat-value text-2xl text-info">
+        {{ activities().filter((item) => item.action.toUpperCase() === 'UPDATE').length }}
+      </div>
+      <div class="stat-desc">Records modified</div>
+    </article>
+  </div>
+
+  <!-- ERROR -->
+  @if (errorMessage()) {
+    <div class="alert alert-error">
+      {{ errorMessage() }}
+      <button class="btn btn-sm" (click)="loadAuditLogs()">Retry</button>
+    </div>
+  }
+
+  <!-- FILTERS -->
+  <section class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <label class="form-control">
+          <span class="label-text mb-1">Search activities</span>
+          <input
+            type="text"
+            class="input input-bordered w-full"
+            placeholder="Search user, asset, record..."
+            [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event); onFilterChange()"
+          />
+        </label>
+
+        <label class="form-control">
+          <span class="label-text mb-1">Action</span>
+          <select
+            class="select select-bordered w-full"
+            [ngModel]="selectedAction()"
+            (ngModelChange)="selectedAction.set($event); onFilterChange()"
+          >
+            <option value="all">All Actions</option>
+            <option value="INSERT">Insert</option>
+            <option value="UPDATE">Update</option>
+            <option value="DELETE">Delete</option>
+          </select>
+        </label>
+
+        <label class="form-control">
+          <span class="label-text mb-1">Module</span>
+          <select
+            class="select select-bordered w-full"
+            [ngModel]="selectedModule()"
+            (ngModelChange)="selectedModule.set($event); onFilterChange()"
+          >
+            <option value="all">All Modules</option>
+            @for (module of modules; track module) {
+              <option [value]="module">{{ formatModule(module) }}</option>
+            }
+          </select>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <!-- AUDIT TABLE -->
+  <section class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-0">
+      <div class="p-5 border-b border-base-300">
+        <h2 class="font-semibold text-lg">Activity History</h2>
+        <p class="text-sm text-base-content/60">
+          {{ filteredActivities.length }} matching record(s)
+        </p>
+      </div>
+
+      @if (loading() && activities().length === 0) {
+        <div class="flex justify-center py-12">
+          <span class="loading loading-spinner loading-lg"></span>
+        </div>
+      } @else if (!loading() && filteredActivities.length === 0) {
+        <div class="text-center py-12 text-base-content/60">
+          <p>No audit records found.</p>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="table table-zebra">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>User</th>
+                <th>Module</th>
+                <th>Action</th>
+                <th>Record</th>
+                <th class="text-right">Details</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (activity of paginatedActivities; track activity.id) {
+                <tr>
+                  <td class="whitespace-nowrap">
+                    {{ formatDate(activity.changed_at) }}
+                  </td>
+
+                  <td class="font-medium">
+                    {{ activity.actor_name }}
+                  </td>
+
+                  <td>
+                    {{ formatModule(activity.table_name) }}
+                  </td>
+
+                  <td>
+                    @if (activity.action.toUpperCase() === 'INSERT') {
+                      <span class="badge badge-success badge-outline">INSERT</span>
+                    } @else if (activity.action.toUpperCase() === 'UPDATE') {
+                      <span class="badge badge-info badge-outline">UPDATE</span>
+                    } @else if (activity.action.toUpperCase() === 'DELETE') {
+                      <span class="badge badge-error badge-outline">DELETE</span>
+                    } @else {
+                      <span class="badge badge-ghost">
+                        {{ formatAction(activity.action) }}
+                      </span>
+                    }
+                  </td>
+
+                  <td class="min-w-48">
+                    <p class="font-medium">
+                      {{ getActivityTitle(activity) }}
+                    </p>
+                    <p class="text-xs text-base-content/60">
+                      {{ getActivityDescription(activity) }}
+                    </p>
+                  </td>
+
+                  <td class="text-right">
+                    <button
+                      class="btn btn-ghost btn-sm"
+                      type="button"
+                      (click)="viewDetails(activity)"
+                    >
+                      View Details
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <!-- PAGINATION -->
+      <div class="flex flex-wrap items-center justify-between gap-3 p-4 border-t border-base-300">
+        <!-- ROWS PER PAGE + RECORD COUNT -->
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center gap-2 text-sm whitespace-nowrap">
+            <span class="text-base-content/60">Rows per page:</span>
+
+            <select
+              class="select select-bordered select-sm w-24"
+              [ngModel]="pageSize()"
+              (ngModelChange)="changePageSize(+$event)"
+            >
+              @for (size of pageSizeOptions; track size) {
+                <option [ngValue]="size">{{ size }}</option>
+              }
+            </select>
+          </div>
+
+          <span class="text-sm text-base-content/60 whitespace-nowrap">
+            Showing {{ firstRecord }}–{{ lastRecord }} of {{ filteredActivities.length }} records
+          </span>
+        </div>
+
+        <!-- PAGE NAVIGATION -->
+        <div class="flex items-center gap-2">
+          <button
+            class="btn btn-outline btn-sm"
+            type="button"
+            (click)="previousPage()"
+            [disabled]="currentPage() <= 1"
+          >
+            Previous
+          </button>
+
+          <span class="text-sm whitespace-nowrap"> {{ currentPage() }} / {{ totalPages }} </span>
+
+          <button
+            class="btn btn-outline btn-sm"
+            type="button"
+            (click)="nextPage()"
+            [disabled]="currentPage() >= totalPages"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- ACTIVITY DETAILS -->
+@if (selectedActivity(); as activity) {
+  <dialog class="modal modal-open" open>
+    <div class="modal-box max-w-4xl">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h3 class="font-bold text-xl">Audit Record Details</h3>
+          <p class="text-sm text-base-content/60 mt-1">
+            {{ getActivityTitle(activity) }}
+          </p>
+        </div>
+
+        <button
+          class="btn btn-sm btn-circle btn-ghost"
+          type="button"
+          aria-label="Close details"
+          (click)="closeDetails()"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
+        <div>
+          <p class="text-xs text-base-content/50">User</p>
+          <p class="font-medium">{{ activity.actor_name }}</p>
+        </div>
+
+        <div>
+          <p class="text-xs text-base-content/50">Date & Time</p>
+          <p class="font-medium">{{ formatDate(activity.changed_at) }}</p>
+        </div>
+
+        <div>
+          <p class="text-xs text-base-content/50">Module</p>
+          <p class="font-medium">{{ formatModule(activity.table_name) }}</p>
+        </div>
+
+        <div>
+          <p class="text-xs text-base-content/50">Record ID</p>
+          <p class="font-medium">{{ activity.record_id }}</p>
+        </div>
+
+        <div>
+          <p class="text-xs text-base-content/50">Action</p>
+          <p class="font-medium">{{ activity.action }}</p>
+        </div>
+
+        <div>
+          <p class="text-xs text-base-content/50">Audit ID</p>
+          <p class="font-medium">{{ activity.id }}</p>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
+          <h4 class="font-semibold mb-2">Previous Values</h4>
+          <pre class="audit-json">{{ formatJson(activity.old_data) }}</pre>
+        </div>
+
+        <div>
+          <h4 class="font-semibold mb-2">New Values</h4>
+          <pre class="audit-json">{{ formatJson(activity.new_data) }}</pre>
+        </div>
+      </div>
+
+      <div class="modal-action">
+        <button class="btn" type="button" (click)="closeDetails()">Close</button>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" (click)="closeDetails()"></div>
+  </dialog>
+}

@@ -124,13 +124,25 @@
                     }
                   </td>
                   <td>
-                    @if (!item.returned_at) {
-                      <button class="btn btn-sm btn-outline" (click)="openReturnForm(item)">
-                        Return
+                    <div class="flex items-center gap-2">
+                      <button
+                        class="btn btn-sm btn-outline btn-primary"
+                        type="button"
+                        (click)="openDetails(item)"
+                      >
+                        View
                       </button>
-                    } @else {
-                      <span class="text-sm text-base-content/50">Completed</span>
-                    }
+
+                      @if (!item.returned_at) {
+                        <button
+                          class="btn btn-sm btn-outline"
+                          type="button"
+                          (click)="openReturnForm(item)"
+                        >
+                          Return
+                        </button>
+                      }
+                    </div>
                   </td>
                 </tr>
               }
@@ -364,5 +376,271 @@
       </form>
     </div>
     <button class="modal-backdrop" aria-label="Close dialog" (click)="closeReturnForm()"></button>
+  </dialog>
+}
+
+<!-- EQUIPMENT ASSIGNMENT DETAILS -->
+@if (showDetails() && selectedDetailsAssignment(); as selected) {
+  <dialog class="modal modal-open">
+    <div class="modal-box max-w-5xl">
+
+      <!-- HEADER -->
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-primary">
+            Assignment Information
+          </p>
+
+          <h3 class="text-2xl font-bold mt-1">
+            {{ selected.assets?.name || 'Equipment Details' }}
+          </h3>
+
+          <p class="text-sm text-base-content/60 mt-1">
+            {{ selected.assets?.asset_tag || 'No Asset Tag' }}
+          </p>
+        </div>
+
+        @if (!selected.returned_at) {
+          <span class="badge badge-warning badge-lg">Assigned</span>
+        } @else {
+          <span class="badge badge-success badge-lg">Returned</span>
+        }
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- EQUIPMENT INFORMATION -->
+      <section>
+        <h4 class="font-bold text-lg mb-4">Equipment Information</h4>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          <div>
+            <p class="text-xs text-base-content/50">Asset Tag</p>
+            <p class="font-semibold">{{ selected.assets?.asset_tag || '—' }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Property Number</p>
+            <p class="font-semibold">{{ selected.assets?.property_no || '—' }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Equipment Name</p>
+            <p class="font-semibold">{{ selected.assets?.name || '—' }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Category</p>
+            <p class="font-semibold">{{ selected.assets?.category_id || '—' }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Brand</p>
+            <p class="font-semibold">{{ selected.assets?.brand || '—' }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Model</p>
+            <p class="font-semibold">{{ selected.assets?.model || '—' }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Serial Number</p>
+            <p class="font-semibold">{{ selected.assets?.serial_number || '—' }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Current Condition</p>
+            <p class="font-semibold capitalize">{{ selected.assets?.condition || '—' }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Equipment Status</p>
+            <p class="font-semibold">
+              {{ selected.assets?.status | titlecase }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Fund Code</p>
+            <p class="font-semibold">{{ selected.assets?.fund_code || '—' }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Account Code</p>
+            <p class="font-semibold">{{ selected.assets?.account_code || '—' }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Property Status</p>
+            <p class="font-semibold">{{ selected.assets?.property_status || '—' }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">PAR Number</p>
+            <p class="font-semibold">{{ selected.assets?.par_no || '—' }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">PAR Date</p>
+            <p class="font-semibold">
+              {{ selected.assets?.par_date ? (selected.assets?.par_date | date:'mediumDate') : '—' }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Unit</p>
+            <p class="font-semibold">{{ selected.assets?.unit || '—' }}</p>
+          </div>
+
+        </div>
+
+        <div class="mt-4">
+          <p class="text-xs text-base-content/50">General Description</p>
+          <p class="font-medium">{{ selected.assets?.general_description || '—' }}</p>
+        </div>
+
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- EMPLOYEE INFORMATION -->
+      <section>
+        <h4 class="font-bold text-lg mb-4">Employee Information</h4>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          <div>
+            <p class="text-xs text-base-content/50">Employee Name</p>
+            <p class="font-semibold">
+              {{ selected.employees?.full_name || '—' }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Employee Number</p>
+            <p class="font-semibold">
+              {{ selected.employees?.employee_no || '—' }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Position</p>
+            <p class="font-semibold">
+              {{ selected.employees?.position || '—' }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Unit / Section</p>
+            <p class="font-semibold">
+              {{ selected.employees?.unit_section || '—' }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Office Location</p>
+            <p class="font-semibold">
+              {{ selected.employees?.office_location || '—' }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Email</p>
+            <p class="font-semibold">
+              {{ selected.employees?.email || '—' }}
+            </p>
+          </div>
+
+          <div class="sm:col-span-2 lg:col-span-3">
+            <p class="text-xs text-base-content/50">Work Assignment</p>
+            <p class="font-semibold">
+              {{ selected.employees?.work_assignment || '—' }}
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- ASSIGNMENT INFORMATION -->
+      <section>
+        <h4 class="font-bold text-lg mb-4">Assignment Information</h4>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          <div>
+            <p class="text-xs text-base-content/50">Assignment Date</p>
+            <p class="font-semibold">
+              {{ selected.assigned_at | date:'mediumDate' }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Issued By</p>
+            <p class="font-semibold">
+              {{ selected.authorized_issuers?.employees?.full_name || 'Not recorded' }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Received Condition</p>
+            <p class="font-semibold capitalize">
+              {{ selected.received_condition || '—' }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Return Date</p>
+            <p class="font-semibold">
+              {{ selected.returned_at ? (selected.returned_at | date:'mediumDate') : 'Not yet returned' }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">Return Condition</p>
+            <p class="font-semibold capitalize">
+              {{ selected.return_condition || '—' }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-base-content/50">PAR Number</p>
+            <p class="font-semibold">
+              {{ selected.assets?.par_no || '—' }}
+            </p>
+          </div>
+
+        </div>
+
+        <div class="mt-4">
+          <p class="text-xs text-base-content/50">Assignment Notes</p>
+          <p class="font-medium whitespace-pre-wrap">
+            {{ selected.notes || 'No notes recorded.' }}
+          </p>
+        </div>
+      </section>
+
+      <!-- FOOTER -->
+      <div class="modal-action">
+        <button
+          class="btn btn-primary"
+          type="button"
+          (click)="closeDetails()"
+        >
+          Close
+        </button>
+      </div>
+
+    </div>
+
+    <button
+      class="modal-backdrop"
+      aria-label="Close details"
+      type="button"
+      (click)="closeDetails()"
+    ></button>
   </dialog>
 }

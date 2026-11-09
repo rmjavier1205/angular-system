@@ -2,16 +2,18 @@
 <div class="login-page">
   <div class="login-card">
 
+    <!-- BRAND -->
     <div class="brand">
       <div class="brand-icon">A</div>
       <h1>PMB AssetDesk</h1>
       <p>IT Equipment Inventory Management System</p>
     </div>
 
+    <!-- HEADING -->
     @if (!registrationSubmitted) {
       <div class="login-heading">
         <h2>Create Account</h2>
-        <p>Register using your authorized employee information.</p>
+        <p>Register using your employee information.</p>
       </div>
     } @else {
       <div class="login-heading">
@@ -20,12 +22,14 @@
       </div>
     }
 
+    <!-- ERROR MESSAGE -->
     @if (errorMessage) {
       <div class="alert alert-error mb-4">
         {{ errorMessage }}
       </div>
     }
 
+    <!-- SUCCESS MESSAGE -->
     @if (successMessage) {
       <div class="alert alert-success mb-4">
         {{ successMessage }}
@@ -33,117 +37,164 @@
     }
 
     @if (!registrationSubmitted) {
+
       <form (ngSubmit)="signup()">
 
-        <div class="form-control">
+        <!-- EMPLOYEE NAME -->
+        <div class="form-control mb-2">
+          <label for="employeeId" class="label">
+            <span class="label-text font-medium">Employee Name</span>
+            <span class="text-error">*</span>
+          </label>
+
+          <select
+            id="employeeId"
+            name="employeeId"
+            class="select select-bordered w-full"
+            [(ngModel)]="selectedEmployeeId"
+            required
+            [disabled]="loadingEmployees || loading"
+          >
+            <option [ngValue]="null" disabled>
+              Select your name
+            </option>
+
+            @for (employee of employees; track employee.id) {
+              <option [ngValue]="employee.id">
+                {{ employee.full_name }}
+              </option>
+            }
+          </select>
+
+          @if (loadingEmployees) {
+            <span class="label-text-alt text-info mt-1">
+              <span class="loading loading-spinner loading-xs"></span>
+              Loading employee list...
+            </span>
+          }
+
+          @if (!loadingEmployees && employees.length === 0) {
+            <span class="label-text-alt text-error mt-1">
+              No active employees with employee numbers are available.
+              Please contact your administrator.
+            </span>
+          }
+        </div>
+
+        <!-- EMPLOYEE NUMBER -->
+        <div class="form-control mb-2">
           <label for="employeeNo" class="label">
-            <span class="label-text">Employee Number</span><span class="text-error">*</span>
+            <span class="label-text font-medium">Employee Number</span>
+            <span class="text-error">*</span>
           </label>
 
           <input
             id="employeeNo"
             type="text"
             name="employeeNo"
-            class="input input-bordered"
+            class="input input-bordered w-full"
             placeholder="Enter your employee number"
             [(ngModel)]="employeeNo"
             autocomplete="off"
             required
+            [disabled]="loading || loadingEmployees"
           />
         </div>
 
-        <div class="form-control">
+        <!-- EMAIL ADDRESS -->
+        <div class="form-control mb-2">
           <label for="email" class="label">
-            <span class="label-text">Registered Email Address</span><span class="text-error">*</span>
+            <span class="label-text font-medium">Email Address</span>
+            <span class="text-error">*</span>
           </label>
 
           <input
             id="email"
             type="email"
             name="email"
-            class="input input-bordered"
-            placeholder="Enter your registered email"
+            class="input input-bordered w-full"
+            placeholder="Enter your email address"
             [(ngModel)]="email"
             autocomplete="email"
             required
+            [disabled]="loading"
           />
         </div>
 
-        <div class="form-control">
+        <!-- PASSWORD -->
+        <div class="form-control mb-2">
           <label for="password" class="label">
-            <span class="label-text">Password</span><span class="text-error">*</span>
+            <span class="label-text font-medium">Password</span>
+            <span class="text-error">*</span>
           </label>
 
           <input
             id="password"
             [type]="showPassword ? 'text' : 'password'"
             name="password"
-            class="input input-bordered"
+            class="input input-bordered w-full"
             placeholder="Create your password"
             [(ngModel)]="password"
             autocomplete="new-password"
             required
+            [disabled]="loading"
           />
         </div>
 
-        <div class="form-control">
+        <!-- CONFIRM PASSWORD -->
+        <div class="form-control mb-2">
           <label for="confirmPassword" class="label">
-            <span class="label-text">Confirm Password</span><span class="text-error">*</span>
+            <span class="label-text font-medium">Confirm Password</span>
+            <span class="text-error">*</span>
           </label>
 
           <input
             id="confirmPassword"
             [type]="showPassword ? 'text' : 'password'"
             name="confirmPassword"
-            class="input input-bordered"
+            class="input input-bordered w-full"
             placeholder="Confirm your password"
             [(ngModel)]="confirmPassword"
             autocomplete="new-password"
             required
+            [disabled]="loading"
           />
         </div>
 
+        <!-- SHOW PASSWORD -->
         <label class="label cursor-pointer justify-start gap-2 mb-3">
           <input
             type="checkbox"
             class="checkbox checkbox-sm"
             [(ngModel)]="showPassword"
             name="showPassword"
+            [disabled]="loading"
           />
+
           <span class="label-text">Show password</span>
         </label>
 
+        <!-- CREATE ACCOUNT -->
         <button
           type="submit"
-          class="btn btn-primary login-button"
-          [disabled]="loading"
+          class="btn btn-primary login-button w-full"
+          [disabled]="
+            loading ||
+            loadingEmployees ||
+            employees.length === 0
+          "
         >
           @if (loading) {
             <span class="loading loading-spinner loading-sm"></span>
             Creating account...
           } @else {
-            Sign Up
+            Create Account
           }
         </button>
 
       </form>
-    } @else {
-      <div class="space-y-4">
-        <div class="text-center text-base-content/60">
-          <p>Please check your inbox for the account verification email.</p>
-        </div>
 
-        <button
-          type="button"
-          class="btn btn-primary login-button"
-          (click)="backToLogin()"
-        >
-          Back to Login
-        </button>
-      </div>
-    }
-
-    @if (!registrationSubmitted) {
+      <!-- LOGIN LINK -->
       <div class="text-center mt-5">
         <span class="text-sm text-base-content/60">
           Already have an account?
@@ -157,8 +208,54 @@
           Sign In
         </button>
       </div>
+
+    } @else {
+
+      <!-- REGISTRATION SUCCESS -->
+      <div class="space-y-4">
+
+        <div class="text-center text-base-content/60">
+          <div class="flex justify-center mb-3">
+            <div class="rounded-full bg-success/10 p-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-10 w-10 text-success"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <h3 class="font-semibold text-base-content">
+            Registration Submitted!
+          </h3>
+
+          <p class="mt-2">
+            Your account has been created. Please check your email
+            and click the confirmation link to verify your email address.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-primary login-button w-full"
+          (click)="backToLogin()"
+        >
+          Back to Login
+        </button>
+
+      </div>
     }
 
+    <!-- FOOTER -->
     <div class="login-footer">
       <p>AssetDesk · IT Equipment Management</p>
     </div>

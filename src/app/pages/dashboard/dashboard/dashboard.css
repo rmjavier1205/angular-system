@@ -262,3 +262,24 @@
     transition: none;
   }
 }
+
+.dashboard__metrics--secondary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.metric-card__value--currency {
+  font-size: clamp(1.2rem, 2vw, 1.7rem);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .dashboard__metrics--secondary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .dashboard__metrics--secondary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

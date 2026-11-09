@@ -65,6 +65,7 @@ export interface Employee {
   id: number;
   employee_no: string | null;
   full_name: string;
+  position: string;
   unit_section: string | null;
   office_location: string | null;
   work_assignment: string | null;

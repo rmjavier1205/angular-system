@@ -31,15 +31,20 @@ export class Employees implements OnInit {
   editingId = signal<number | null>(null);
   issuerActionId = signal<number | null>(null);
 
+  pageSize = signal(10);
+  currentPage = signal(1);
+
+  pageSizeOptions = [10, 25, 50, 100];
+
   form = {
     employee_no: '',
     full_name: '',
+    position: '',
     unit_section: '',
     office_location: '',
     work_assignment: '',
     email: '',
     active: true,
-    can_register: false,
   };
 
   ngOnInit(): void {
@@ -94,6 +99,7 @@ export class Employees implements OnInit {
       [
         employee.employee_no,
         employee.full_name,
+        employee.position,
         employee.unit_section,
         employee.office_location,
         employee.work_assignment,
@@ -106,6 +112,57 @@ export class Employees implements OnInit {
     return this.issuers().some((issuer) => issuer.employee_id === employeeId && issuer.is_active);
   }
 
+  get totalPages(): number {
+    return Math.max(
+      1,
+      Math.ceil(this.filteredEmployees.length / this.pageSize())
+    );
+  }
+
+  get paginatedEmployees(): Employee[] {
+    const start = (this.currentPage() - 1) * this.pageSize();
+
+    return this.filteredEmployees.slice(
+      start,
+      start + this.pageSize()
+    );
+  }
+
+  get firstRecord(): number {
+    return this.filteredEmployees.length === 0
+      ? 0
+      : (this.currentPage() - 1) * this.pageSize() + 1;
+  }
+
+  get lastRecord(): number {
+    return Math.min(
+      this.currentPage() * this.pageSize(),
+      this.filteredEmployees.length
+    );
+  }
+
+  changePageSize(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+  }
+
+  previousPage(): void {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(page => page - 1);
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage() < this.totalPages) {
+      this.currentPage.update(page => page + 1);
+    }
+  }
+  
+  onSearchChange(value: string): void {
+    this.searchText.set(value);
+    this.currentPage.set(1);
+  }
+
   async loadEmployees(): Promise<void> {
     this.loading.set(true);
     this.errorMessage.set('');
@@ -113,7 +170,9 @@ export class Employees implements OnInit {
     try {
       const { data, error } = await supabase
         .from('employees')
-        .select('id, employee_no, full_name, unit_section, office_location, email, active, can_register')
+        .select(
+          'id, employee_no, full_name, position, unit_section, office_location, work_assignment, email, active',
+        )
         .order('full_name');
 
       if (error) throw error;
@@ -231,12 +290,12 @@ export class Employees implements OnInit {
     this.form = {
       employee_no: employee.employee_no ?? '',
       full_name: employee.full_name,
+      position: employee.position ?? '',
       unit_section: employee.unit_section ?? '',
       office_location: employee.office_location ?? '',
       work_assignment: employee.work_assignment ?? '',
       email: employee.email ?? '',
       active: employee.active,
-      can_register: employee.can_register?? false,
     };
 
     this.editingId.set(employee.id);
@@ -262,14 +321,12 @@ export class Employees implements OnInit {
     const payload = {
       employee_no: this.form.employee_no.trim() || null,
       full_name: this.form.full_name.trim(),
+      position: this.form.position.trim(),
       unit_section: this.form.unit_section.trim() || null,
       office_location: this.form.office_location.trim() || null,
+      work_assignment: this.form.work_assignment.trim() || null,
       email: this.form.email.trim() || null,
       active: this.form.active,
-
-        ...(this.isAdmin()
-      ? { can_register: this.form.active && this.form.can_register }
-      : {}),
     };
 
     try {
@@ -356,12 +413,12 @@ export class Employees implements OnInit {
     this.form = {
       employee_no: '',
       full_name: '',
+      position: '',
       unit_section: '',
       office_location: '',
       work_assignment: '',
       email: '',
       active: true,
-      can_register: false,
     };
   }
 }

@@ -17,16 +17,20 @@ interface Assignment {
   received_condition: string | null;
   return_condition: string | null;
   notes: string | null;
-  assets: {
-    asset_tag: string;
-    name: string;
-    status: string;
-  } | null;
+
+  assets: Asset | null;
+
   employees: {
+    id: number;
     full_name: string;
     employee_no: string | null;
+    position: string | null;
     unit_section: string | null;
+    office_location: string | null;
+    work_assignment: string | null;
+    email: string | null;
   } | null;
+
   authorized_issuers: {
     employee_id: number;
     employees: {
@@ -62,7 +66,9 @@ export class Assignments implements OnInit {
   searchText = signal('');
   showForm = signal(false);
   showReturnForm = signal(false);
+  showDetails = signal(false);
   selectedAssignment = signal<Assignment | null>(null);
+  selectedDetailsAssignment = signal<Assignment | null>(null);
 
   readonly conditions = ['excellent', 'good', 'fair', 'poor'];
 
@@ -111,29 +117,19 @@ export class Assignments implements OnInit {
       const [assignmentResult, assetResult, employeeResult, issuerResult] = await Promise.all([
         supabase
           .from('assignments')
-
           .select(
             `*,
-            assets (
-              asset_tag,
-              name,
-              brand,
-              model
-            ),
-            employees (
-              full_name,
-              employee_no
-            ),
-            authorized_issuers!assignments_issued_by_fkey (
-              employee_id,
-              employees (
-                full_name,
-                employee_no
+              assets (*),
+              employees (*),
+              authorized_issuers!assignments_issued_by_fkey (
+                employee_id,
+                employees (
+                  full_name,
+                  employee_no
+                )
               )
-            )
-          `,
+            `,
           )
-
           .order('assigned_at', { ascending: false }),
 
         supabase.from('assets').select('*').eq('status', 'available').order('asset_tag'),
@@ -381,5 +377,15 @@ export class Assignments implements OnInit {
     } finally {
       this.saving.set(false);
     }
+  }
+
+  openDetails(assignment: Assignment): void {
+    this.selectedDetailsAssignment.set(assignment);
+    this.showDetails.set(true);
+  }
+
+  closeDetails(): void {
+    this.showDetails.set(false);
+    this.selectedDetailsAssignment.set(null);
   }
 }

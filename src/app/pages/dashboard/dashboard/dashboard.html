@@ -1,4 +1,7 @@
+
 <section class="dashboard" aria-labelledby="dashboard-title">
+
+  <!-- HEADER -->
   <header class="dashboard__header">
     <div>
       <p class="dashboard__eyebrow">OVERVIEW</p>
@@ -7,98 +10,201 @@
         A clear view of your organization's IT equipment.
       </p>
     </div>
-    <span class="dashboard__workspace">AssetDesk workspace</span>
+
+    <button
+      class="btn btn-outline btn-sm"
+      type="button"
+      (click)="loadDashboard()"
+      [disabled]="loading()"
+    >
+      @if (loading()) {
+        <span class="loading loading-spinner loading-xs"></span>
+        Refreshing...
+      } @else {
+        <span>↻</span>
+        Refresh
+      }
+    </button>
   </header>
 
+  <!-- ERROR -->
+  @if (errorMessage()) {
+    <div class="alert alert-error">
+      {{ errorMessage() }}
+      <button class="btn btn-sm" (click)="loadDashboard()">
+        Retry
+      </button>
+    </div>
+  }
+
+  <!-- INVENTORY SUMMARY -->
   <section class="dashboard__metrics" aria-label="Asset summary">
+
     <article class="metric-card">
-      <p class="metric-card__label">Total assets</p>
-      <p class="metric-card__value" aria-label="No data available">—</p>
-      <p class="metric-card__hint">Tracked equipment</p>
+      <p class="metric-card__label ">Total Assets</p>
+      <p class="metric-card__value">
+        @if (loading()) {
+          <span class="loading loading-dots loading-md"></span>
+        } @else {
+          {{ formatNumber(summary().totalAssets) }}
+        }
+      </p>
+      <p class="metric-card__hint">Registered equipment</p>
     </article>
-    <article class="metric-card">
-      <p class="metric-card__label">Assigned</p>
-      <p class="metric-card__value" aria-label="No data available">—</p>
-      <p class="metric-card__hint">Currently with employees</p>
-    </article>
+
     <article class="metric-card">
       <p class="metric-card__label">Available</p>
-      <p class="metric-card__value" aria-label="No data available">—</p>
-      <p class="metric-card__hint">Ready to be assigned</p>
+      <p class="metric-card__value text-success">
+        {{ formatNumber(summary().available) }}
+      </p>
+      <p class="metric-card__hint">Ready for assignment</p>
     </article>
+
+    <article class="metric-card">
+      <p class="metric-card__label">Assigned</p>
+      <p class="metric-card__value text-primary">
+        {{ formatNumber(summary().assigned) }}
+      </p>
+      <p class="metric-card__hint">Currently issued</p>
+    </article>
+
     <article class="metric-card metric-card--attention">
-      <p class="metric-card__label">Needs attention</p>
-      <p class="metric-card__value" aria-label="No data available">—</p>
-      <p class="metric-card__hint">Maintenance and follow-ups</p>
+      <p class="metric-card__label">Under Repair</p>
+      <p class="metric-card__value text-warning">
+        {{ formatNumber(summary().underRepair) }}
+      </p>
+      <p class="metric-card__hint">Requires maintenance</p>
     </article>
+
   </section>
 
+  <!-- SECONDARY SUMMARY -->
+  <section class="dashboard__metrics dashboard__metrics--secondary">
+
+    <article class="metric-card">
+      <p class="metric-card__label">Retired Assets</p>
+      <p class="metric-card__value">
+        {{ formatNumber(summary().retired) }}
+      </p>
+      <p class="metric-card__hint">Retired equipment</p>
+    </article>
+
+    <article class="metric-card">
+      <p class="metric-card__label">Disposed Assets</p>
+      <p class="metric-card__value">
+        {{ formatNumber(summary().disposed) }}
+      </p>
+      <p class="metric-card__hint">Disposed equipment</p>
+    </article>
+
+    <article class="metric-card">
+      <p class="metric-card__label">Inventory Value</p>
+      <p class="metric-card__value metric-card__value--currency">
+        {{ formatCurrency(summary().totalValue) }}
+      </p>
+      <p class="metric-card__hint">Total recorded purchase cost</p>
+    </article>
+
+  </section>
+
+  <!-- CONTENT -->
   <div class="dashboard__content">
-    <section class="dashboard-panel" aria-labelledby="activity-title">
+
+    <!-- STATUS OVERVIEW -->
+    <section class="dashboard-panel">
+
       <div class="dashboard-panel__header">
         <div>
-          <h3 id="activity-title">Recent activity</h3>
-          <p>Updates across your equipment</p>
+          <h3>Asset Status Overview</h3>
+          <p>Distribution of registered equipment</p>
         </div>
       </div>
-      <div class="dashboard-empty">
-        <span class="dashboard-empty__mark" aria-hidden="true">A</span>
-        <h4>Your activity will appear here</h4>
-        <p>
-          Add equipment or update a record to start building your activity
-          history.
-        </p>
+
+      <div class="mt-6 space-y-5">
+
+        @for (item of [
+          { name: 'Available', value: summary().available, color: 'bg-success' },
+          { name: 'Assigned', value: summary().assigned, color: 'bg-primary' },
+          { name: 'Under Repair', value: summary().underRepair, color: 'bg-warning' },
+          { name: 'Retired', value: summary().retired, color: 'bg-neutral' },
+          { name: 'Disposed', value: summary().disposed, color: 'bg-error' }
+        ]; track item.name) {
+
+          <div>
+            <div class="mb-2 flex justify-between gap-2 text-sm">
+              <span class="font-medium text-base-content">
+                {{ item.name }}
+              </span>
+
+              <span class="text-base-content/60">
+                {{ formatNumber(item.value) }}
+                ({{ getPercentage(item.value) | number:'1.0-1' }}%)
+              </span>
+            </div>
+
+            <div class="h-2.5 w-full overflow-hidden rounded-full bg-base-200">
+              <div
+                class="h-full rounded-full transition-all duration-500"
+                [class]="item.color"
+                [style.width.%]="getPercentage(item.value)"
+              ></div>
+            </div>
+          </div>
+
+        }
+
       </div>
+
     </section>
 
-    <nav class="dashboard-panel quick-links" aria-labelledby="quick-links-title">
+    <!-- QUICK LINKS -->
+    <nav class="dashboard-panel quick-links">
+
       <div class="dashboard-panel__header">
         <div>
-          <h3 id="quick-links-title">Quick links</h3>
-          <p>Go to a workspace area</p>
+          <h3>Quick Actions</h3>
+          <p>Access your workspace</p>
         </div>
       </div>
+
       <a class="quick-links__item" routerLink="/inventory">
-        <span class="quick-links__icon" aria-hidden="true">01</span>
+        <span class="quick-links__icon">01</span>
         <span>
           <strong>Inventory</strong>
           <small>Browse equipment records</small>
         </span>
-        <span class="quick-links__arrow" aria-hidden="true">→</span>
+        <span class="quick-links__arrow">→</span>
       </a>
+
       <a class="quick-links__item" routerLink="/employees">
-        <span class="quick-links__icon" aria-hidden="true">02</span>
+        <span class="quick-links__icon">02</span>
         <span>
           <strong>Employees</strong>
-          <small>View your team directory</small>
+          <small>View employee directory</small>
         </span>
-        <span class="quick-links__arrow" aria-hidden="true">→</span>
+        <span class="quick-links__arrow">→</span>
       </a>
+
+      <a class="quick-links__item" routerLink="/assignments">
+        <span class="quick-links__icon">03</span>
+        <span>
+          <strong>Assignments</strong>
+          <small>Manage equipment assignments</small>
+        </span>
+        <span class="quick-links__arrow">→</span>
+      </a>
+
       <a class="quick-links__item" routerLink="/maintenance">
-        <span class="quick-links__icon" aria-hidden="true">03</span>
+        <span class="quick-links__icon">04</span>
         <span>
           <strong>Maintenance</strong>
           <small>Review service records</small>
         </span>
-        <span class="quick-links__arrow" aria-hidden="true">→</span>
+        <span class="quick-links__arrow">→</span>
       </a>
+
     </nav>
+
   </div>
-</section>
 
-
-
-<section class="dashboard-panel" aria-labelledby="connection-title">
-  <h3 id="connection-title">Supabase Connection Test</h3>
-
-  <p>{{ connectionStatus() }}</p>
-
-  <button
-    class="btn btn-primary"
-    type="button"
-    [disabled]="testing()"
-    (click)="testConnection()"
-  >
-    {{ testing() ? 'Testing...' : 'Test Supabase Connection' }}
-  </button>
 </section>

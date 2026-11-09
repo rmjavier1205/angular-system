@@ -56,12 +56,102 @@ export type NewAsset = Omit<
 > &
   Partial<Pick<Asset, OfficialRegisterFields>>;
 
+export interface DashboardSummary {
+  totalAssets: number;
+  available: number;
+  assigned: number;
+  underRepair: number;
+  retired: number;
+  disposed: number;
+  totalValue: number;
+}
+
+export interface RecentActivity {
+  id: number;
+  table_name: string;
+  record_id: string;
+  action: string;
+  changed_by: string;
+  changed_at: string;
+  actor_name: string;
+  asset_tag: string | null;
+  asset_name: string | null;
+  old_data: Record<string, unknown> | null;
+  new_data: Record<string, unknown> | null;
+}
+export interface MyAssignedEquipment {
+  assignment_id: number;
+  asset_id: number;
+  asset_tag: string | null;
+  asset_name: string | null;
+  brand: string | null;
+  model: string | null;
+  serial_number: string | null;
+  property_no: string | null;
+  assigned_at: string;
+  received_condition: string | null;
+  current_condition: string | null;
+  notes: string | null;
+}
 
 @Injectable({
   providedIn: 'root',
 })
 
 export class AssetService {
+  async getDashboardSummary(): Promise<DashboardSummary> {
+    const statuses = [
+      'available',
+      'assigned',
+      'under_repair',
+      'retired',
+      'disposed',
+    ] as const;
+
+    const results = await Promise.all(
+      statuses.map(async (status) => {
+        const { count, error } = await supabase
+          .from('assets')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', status);
+
+        if (error) {
+          throw error;
+        }
+
+        return { status, count: count ?? 0 };
+      })
+    );
+
+    const counts = Object.fromEntries(
+      results.map(item => [item.status, item.count])
+    );
+
+    // Retrieve purchase costs for the inventory value.
+    const { data, error } = await supabase
+      .from('assets')
+      .select('purchase_cost');
+
+    if (error) {
+      throw error;
+    }
+
+    const totalValue = (data ?? []).reduce(
+      (sum, asset) => sum + Number(asset.purchase_cost ?? 0),
+      0
+    );
+
+    return {
+      totalAssets: results.reduce((sum, item) => sum + item.count, 0),
+      available: counts['available'] ?? 0,
+      assigned: counts['assigned'] ?? 0,
+      underRepair: counts['under_repair'] ?? 0,
+      retired: counts['retired'] ?? 0,
+      disposed: counts['disposed'] ?? 0,
+      totalValue,
+    };
+  }
+
   async getAssets(): Promise<Asset[]> {
     const { data, error } = await supabase
       .from('assets')
@@ -91,6 +181,21 @@ export class AssetService {
     return data as Asset;
   }
 
+  async getRecentActivities(
+    limit: number = 10
+  ): Promise<RecentActivity[]> {
+    const { data, error } = await supabase.rpc(
+      'get_recent_audit_activities',
+      { p_limit: limit }
+    );
+
+    if (error) {
+      console.error('Failed to load recent activities:', error);
+      throw error;
+    }
+
+    return (data ?? []) as RecentActivity[];
+  }
 
   async getCategories(): Promise<Category[]> {
     const { data, error } = await supabase
@@ -109,7 +214,7 @@ export class AssetService {
     const { data, error } = await supabase
       .from('employees')
       .select(
-        'id, employee_no, full_name, unit_section, office_location, work_assignment, email, active, can_register',
+        'id, employee_no, full_name, position, unit_section, office_location, work_assignment, email, active, can_register',
       )
       .eq('active', true)
       .order('full_name');
@@ -261,5 +366,18 @@ export class AssetService {
     }
 
     return (data ?? []) as Asset[];
+  }
+
+  async getMyAssignedEquipment(): Promise<MyAssignedEquipment[]> {
+    const { data, error } = await supabase.rpc(
+      'get_my_assigned_equipment'
+    );
+
+    if (error) {
+      console.error('Failed to load my assigned equipment:', error);
+      throw error;
+    }
+
+    return (data ?? []) as MyAssignedEquipment[];
   }
 }
