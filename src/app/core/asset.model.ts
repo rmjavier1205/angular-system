@@ -1,4 +1,3 @@
-
 export type AssetCondition = 'excellent' | 'good' | 'fair' | 'poor';
 
 export const ASSET_TYPES = {
@@ -11,15 +10,10 @@ export const ASSET_TYPES = {
 
 export type AssetType = (typeof ASSET_TYPES)[keyof typeof ASSET_TYPES];
 
-export interface AssetStatus {
-  name: string;
-  value: AssetType;
-}
+export interface AssetStatus { name: string; value: AssetType; }
 
 export interface Asset {
   id: number;
-
-  // Existing AssetDesk fields
   asset_tag: string;
   name: string;
   category_id: number | null;
@@ -36,8 +30,6 @@ export interface Asset {
   unit_section: string | null;
   office_location: string | null;
   notes: string | null;
-
-  // Official Inventory of Staff and Assigned Equipment fields
   property_no: string | null;
   fund_code: string | null;
   account_code: string | null;
@@ -46,20 +38,29 @@ export interface Asset {
   unit: string | null;
   general_description: string | null;
   warranty_details: string | null;
+
+  // New inventory template fields
+  processor: string | null;
+  ram: string | null;
+  storage: string | null;
+  display: string | null;
+  operating_system: string | null;
+  graphics: string | null;
+  connectivity: string | null;
+  ports: string | null;
+  accessories: string | null;
+  other_specifications: string | null;
+  warranty_period: string | null;
+
   par_no: string | null;
   par_date: string | null;
   receiver: string | null;
   subpar: string | null;
-
   created_at: string;
   updated_at: string;
 }
 
-export interface Category {
-  id: number;
-  name: string;
-  description: string | null;
-}
+export interface Category { id: number; name: string; description: string | null; }
 
 export interface Employee {
   id: number;
@@ -88,10 +89,5 @@ export interface Issuer {
   id: number;
   employee_id: number;
   is_active: boolean;
-  employee: {
-    id: number;
-    full_name: string;
-    employee_no: string | null;
-    active: boolean;
-  };
+  employee: { id: number; full_name: string; employee_no: string | null; active: boolean; };
 }

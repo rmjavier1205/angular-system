@@ -23,6 +23,17 @@ export interface BulkAssetReceiving {
   property_status: string | null;
   unit: string | null;
   general_description: string | null;
+  processor: string | null;
+  ram: string | null;
+  storage: string | null;
+  display: string | null;
+  operating_system: string | null;
+  graphics: string | null;
+  connectivity: string | null;
+  ports: string | null;
+  accessories: string | null;
+  other_specifications: string | null;
+  warranty_period: string | null;
   warranty_details: string | null;
   par_no: string | null;
   par_date: string | null;

@@ -246,6 +246,47 @@
                 />
               </label>
 
+              <label class="form-control">
+                <span class="label-text mb-1">Processor</span>
+                <input class="input input-bordered w-full" name="processor" [(ngModel)]="form.processor" placeholder="e.g. Intel Core i5-1235U" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">RAM</span>
+                <input class="input input-bordered w-full" name="ram" [(ngModel)]="form.ram" placeholder="e.g. 16 GB DDR4" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Storage</span>
+                <input class="input input-bordered w-full" name="storage" [(ngModel)]="form.storage" placeholder="e.g. 512 GB SSD" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Display</span>
+                <input class="input input-bordered w-full" name="display" [(ngModel)]="form.display" placeholder="e.g. 14-inch FHD" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Operating System</span>
+                <input class="input input-bordered w-full" name="operating_system" [(ngModel)]="form.operating_system" placeholder="e.g. Windows 11 Pro" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Graphics</span>
+                <input class="input input-bordered w-full" name="graphics" [(ngModel)]="form.graphics" placeholder="e.g. Intel Iris Xe" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Connectivity</span>
+                <input class="input input-bordered w-full" name="connectivity" [(ngModel)]="form.connectivity" placeholder="e.g. Wi-Fi 6, Bluetooth 5.2" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Ports</span>
+                <input class="input input-bordered w-full" name="ports" [(ngModel)]="form.ports" placeholder="e.g. USB-A, USB-C, HDMI" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Accessories</span>
+                <input class="input input-bordered w-full" name="accessories" [(ngModel)]="form.accessories" placeholder="e.g. Charger, laptop bag" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Other Specifications</span>
+                <input class="input input-bordered w-full" name="other_specifications" [(ngModel)]="form.other_specifications" placeholder="Additional technical details" />
+              </label>
+
               <label class="form-control md:col-span-2">
                 <span class="label-text mb-1">General Description</span>
                 <textarea
@@ -322,6 +363,11 @@
                   name="warranty_expiry"
                   [(ngModel)]="form.warranty_expiry"
                 />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Warranty Period</span>
+                <input class="input input-bordered w-full" name="warranty_period" [(ngModel)]="form.warranty_period" placeholder="e.g. 3 years" />
               </label>
 
               <label class="form-control md:col-span-2">
@@ -596,6 +642,47 @@
                 />
               </label>
 
+              <label class="form-control">
+                <span class="label-text mb-1">Processor</span>
+                <input class="input input-bordered w-full" name="bulk_processor" [(ngModel)]="bulkForm.processor" placeholder="e.g. Intel Core i5-1235U" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">RAM</span>
+                <input class="input input-bordered w-full" name="bulk_ram" [(ngModel)]="bulkForm.ram" placeholder="e.g. 16 GB DDR4" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Storage</span>
+                <input class="input input-bordered w-full" name="bulk_storage" [(ngModel)]="bulkForm.storage" placeholder="e.g. 512 GB SSD" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Display</span>
+                <input class="input input-bordered w-full" name="bulk_display" [(ngModel)]="bulkForm.display" placeholder="e.g. 14-inch FHD" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Operating System</span>
+                <input class="input input-bordered w-full" name="bulk_operating_system" [(ngModel)]="bulkForm.operating_system" placeholder="e.g. Windows 11 Pro" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Graphics</span>
+                <input class="input input-bordered w-full" name="bulk_graphics" [(ngModel)]="bulkForm.graphics" placeholder="e.g. Intel Iris Xe" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Connectivity</span>
+                <input class="input input-bordered w-full" name="bulk_connectivity" [(ngModel)]="bulkForm.connectivity" placeholder="e.g. Wi-Fi 6, Bluetooth 5.2" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Ports</span>
+                <input class="input input-bordered w-full" name="bulk_ports" [(ngModel)]="bulkForm.ports" placeholder="e.g. USB-A, USB-C, HDMI" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Accessories</span>
+                <input class="input input-bordered w-full" name="bulk_accessories" [(ngModel)]="bulkForm.accessories" placeholder="e.g. Charger, laptop bag" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Other Specifications</span>
+                <input class="input input-bordered w-full" name="bulk_other_specifications" [(ngModel)]="bulkForm.other_specifications" placeholder="Additional technical details" />
+              </label>
+
               <label class="form-control md:col-span-2">
                 <span class="label-text mb-1">General Description</span>
                 <textarea
@@ -672,6 +759,11 @@
                   name="bulk_warranty_expiry"
                   [(ngModel)]="bulkForm.warranty_expiry"
                 />
+              </label>
+
+              <label class="form-control">
+                <span class="label-text mb-1">Warranty Period</span>
+                <input class="input input-bordered w-full" name="bulk_warranty_period" [(ngModel)]="bulkForm.warranty_period" placeholder="e.g. 3 years" />
               </label>
 
               <label class="form-control md:col-span-2">
@@ -1045,6 +1137,47 @@
               />
             </label>
 
+              <label class="form-control">
+                <span class="label-text mb-1">Processor</span>
+                <input class="input input-bordered w-full" name="processor" [(ngModel)]="form.processor" placeholder="e.g. Intel Core i5-1235U" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">RAM</span>
+                <input class="input input-bordered w-full" name="ram" [(ngModel)]="form.ram" placeholder="e.g. 16 GB DDR4" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Storage</span>
+                <input class="input input-bordered w-full" name="storage" [(ngModel)]="form.storage" placeholder="e.g. 512 GB SSD" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Display</span>
+                <input class="input input-bordered w-full" name="display" [(ngModel)]="form.display" placeholder="e.g. 14-inch FHD" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Operating System</span>
+                <input class="input input-bordered w-full" name="operating_system" [(ngModel)]="form.operating_system" placeholder="e.g. Windows 11 Pro" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Graphics</span>
+                <input class="input input-bordered w-full" name="graphics" [(ngModel)]="form.graphics" placeholder="e.g. Intel Iris Xe" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Connectivity</span>
+                <input class="input input-bordered w-full" name="connectivity" [(ngModel)]="form.connectivity" placeholder="e.g. Wi-Fi 6, Bluetooth 5.2" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Ports</span>
+                <input class="input input-bordered w-full" name="ports" [(ngModel)]="form.ports" placeholder="e.g. USB-A, USB-C, HDMI" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Accessories</span>
+                <input class="input input-bordered w-full" name="accessories" [(ngModel)]="form.accessories" placeholder="e.g. Charger, laptop bag" />
+              </label>
+              <label class="form-control">
+                <span class="label-text mb-1">Other Specifications</span>
+                <input class="input input-bordered w-full" name="other_specifications" [(ngModel)]="form.other_specifications" placeholder="Additional technical details" />
+              </label>
+
             <label class="form-control md:col-span-2">
               <span class="label-text mb-1">General Description</span>
               <textarea
@@ -1121,6 +1254,11 @@
                 name="warranty_expiry"
                 [(ngModel)]="form.warranty_expiry"
               />
+            </label>
+
+            <label class="form-control">
+              <span class="label-text mb-1">Warranty Period</span>
+              <input class="input input-bordered w-full" name="warranty_period" [(ngModel)]="form.warranty_period" placeholder="e.g. 3 years" />
             </label>
 
             <label class="form-control md:col-span-2">
