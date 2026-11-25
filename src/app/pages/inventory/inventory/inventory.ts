@@ -29,11 +29,18 @@ export class Inventory implements OnInit {
   errorMessage = signal('');
   pageErrorMessage = signal('');
   successMessage = signal('');
+  searchText = signal('');
   showForm = signal(false);
   showBulkForm = signal(false);
   showEditForm = signal(false);
   editingId = signal<number | null>(null);
   bulkQuantity = 1;
+
+  
+  pageSize = signal(10);
+  currentPage = signal(1);
+
+  pageSizeOptions = [10, 25, 50, 100];
 
   bulkForm = {
     name: '',
@@ -162,6 +169,9 @@ export class Inventory implements OnInit {
       ]);
 
       this.assets.set(assets);
+      if (this.currentPage() > this.totalPages) {
+        this.currentPage.set(this.totalPages);
+      }
       this.categories.set(categories);
       this.employees.set(employees);
     } catch (error) {
@@ -391,19 +401,35 @@ async saveBulkAssets(): Promise<void> {
   }
 }
 
-  onEmployeeChange(): void {
-    const employee = this.employees().find((item) => item.id === this.form.employee_id);
+  
+onEmployeeChange(): void {
+  const employee = this.employees().find(
+    (item) => item.id === this.form.employee_id
+  );
 
-    if (employee) {
-      this.form.unit_section = employee.unit_section ?? '';
-      this.form.office_location = employee.office_location ?? '';
-      this.form.status = 'assigned';
-    } else {
-      this.form.status = 'available';
-      this.form.unit_section = '';
-      this.form.office_location = '';
-    }
+  if (employee) {
+    this.form.subpar = employee.full_name;
+    this.form.unit_section = employee.unit_section ?? '';
+    this.form.office_location = employee.office_location ?? '';
+    this.form.status = ASSET_TYPES.ASSIGNED;
+  } else {
+    this.form.subpar = '';
+    this.form.status = ASSET_TYPES.AVAILABLE;
+    this.form.unit_section = '';
+    this.form.office_location = '';
   }
+}
+
+onSubparEmployeeChange(): void {
+  const employee = this.employees().find(
+    (item) => item.id === this.form.employee_id
+  );
+
+  if (employee) {
+    this.onEmployeeChange();
+  }
+}
+
 
   async saveAsset(): Promise<void> {
     this.errorMessage.set('');
@@ -570,5 +596,71 @@ async saveBulkAssets(): Promise<void> {
       this.categories().find((category) => category.id === categoryId)?.name ?? 'Uncategorized'
     );
   }
+
+  get filteredAssets(): Asset[] {
+      const search = this.searchText().trim().toLowerCase();
+
+      if (!search) return this.assets();
+
+      return this.assets().filter((asset) =>
+        [
+          asset.asset_tag,
+          asset.name,
+          asset.serial_number,
+          asset.property_no,
+        ].some((value) => value?.toLowerCase().includes(search)),
+      );
+    }
+
+    get totalPages(): number {
+      return Math.max(
+        1,
+        Math.ceil(this.filteredAssets.length / this.pageSize())
+      );
+    }
+
+    get paginatedAssets(): Asset[] {
+      const start = (this.currentPage() - 1) * this.pageSize();
+
+      return this.filteredAssets.slice(
+        start,
+        start + this.pageSize()
+      );
+    }
+
+    get firstRecord(): number {
+      return this.filteredAssets.length === 0
+        ? 0
+        : (this.currentPage() - 1) * this.pageSize() + 1;
+    }
+
+    get lastRecord(): number {
+      return Math.min(
+        this.currentPage() * this.pageSize(),
+        this.filteredAssets.length
+      );
+    }
+
+    changePageSize(size: number): void {
+      this.pageSize.set(size);
+      this.currentPage.set(1);
+    }
+
+    previousPage(): void {
+      if (this.currentPage() > 1) {
+        this.currentPage.update(page => page - 1);
+      }
+    }
+
+    nextPage(): void {
+      if (this.currentPage() < this.totalPages) {
+        this.currentPage.update(page => page + 1);
+      }
+    }
+    
+    onSearchChange(value: string): void {
+      this.searchText.set(value);
+      this.currentPage.set(1);
+    }
 
 }

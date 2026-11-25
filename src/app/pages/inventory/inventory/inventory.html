@@ -54,52 +54,122 @@
       </div>
     </div>
 
-    <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
-      <table class="table table-zebra">
-        <thead>
-          <tr>
-            <th>Asset tag</th>
-            <th>Equipment</th>
-            <th>Category</th>
-            <th>Brand / Model</th>
-            <th>Purchase cost</th>
-            <th>Condition</th>
-            <th>Status</th>
-            <th>Location</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (asset of assets(); track asset.id) {
+  <div class="card border border-base-300 bg-base-100 shadow-sm">
+      <div class="card-body p-0">
+        <div class="border-b border-base-300 p-4">
+          <input
+            type="search"
+            class="input input-bordered w-full max-w-md"
+            placeholder="Search asset tag, name, serial number, or property number..."
+            [ngModel]="searchText()"
+            (ngModelChange)="onSearchChange($event)"
+          />
+        </div>
+
+        @if (filteredAssets.length === 0) {
+          <div class="p-12 text-center text-base-content/60">No equipment found.</div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="table table-zebra text-center">
+          <thead>
             <tr>
-              <td class="font-mono font-semibold">{{ asset.asset_tag }}</td>
-              <td>
-                <div class="font-medium">{{ asset.name }}</div>
-                <div class="text-xs text-base-content/60">
-                  {{ asset.serial_number || 'No serial number' }}
-                </div>
-              </td>
-              <td>{{ categoryName(asset.category_id) }}</td>
-              <td>{{ asset.brand || '—' }} {{ asset.model || '' }}</td>
-              <td>{{ asset.purchase_cost | currency: 'PHP' : 'symbol' : '1.2-2' }}</td>
-              <td>{{ asset.condition }}</td>
-              <td>
-                <span class="badge badge-outline">{{ asset.status }}</span>
-              </td>
-              <td>{{ asset.office_location || '—' }}</td>
-              <td>
-                <button class="btn btn-ghost btn-sm" type="button" (click)="openEditForm(asset)">
-                  Edit
-                </button>
-              </td>
+              <th>Asset tag</th>
+              <th>Equipment</th>
+              <th>Category</th>
+              <th>Brand / Model</th>
+              <th>Purchase cost</th>
+              <th>Condition</th>
+              <th>Status</th>
+              <th>Location</th>
+              <th>Action</th>
             </tr>
-          } @empty {
-            <tr>
-              <td colspan="8" class="py-12 text-center">No equipment found.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (asset of paginatedAssets; track asset.id) {
+              <tr>
+                <td class="font-mono font-semibold">{{ asset.asset_tag }}</td>
+                <td>
+                  <div class="font-medium">{{ asset.name }}</div>
+                  <div class="text-xs text-base-content/60">
+                    {{ asset.serial_number || 'No serial number' }}
+                  </div>
+                </td>
+                <td>{{ categoryName(asset.category_id) }}</td>
+                <td>{{ asset.brand || '—' }} {{ asset.model || '' }}</td>
+                <td>{{ asset.purchase_cost | currency: 'PHP' : 'symbol' : '1.2-2' }}</td>
+                <td>{{ asset.condition }}</td>
+                <td>
+                  <span class="badge badge-outline">{{ asset.status }}</span>
+                </td>
+                <td>{{ asset.office_location || '—' }}</td>
+                <td>
+                  <button class="btn btn-ghost btn-sm" type="button" (click)="openEditForm(asset)">
+                    Edit
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <!-- PAGINATION -->
+        <div class="flex flex-col gap-4 border-t border-base-300 p-4 sm:flex-row sm:items-center sm:justify-between">
+
+          <!-- ROWS PER PAGE -->
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-base-content/60">
+              Rows per page:
+            </span>
+
+            <select
+              class="select select-bordered select-sm w-24"
+              [ngModel]="pageSize()"
+              (ngModelChange)="changePageSize(+$event)"
+            >
+              @for (size of pageSizeOptions; track size) {
+                <option [ngValue]="size">
+                  {{ size }}
+                </option>
+              }
+            </select>
+          </div>
+
+          <!-- RECORD INFORMATION -->
+          <p class="text-sm text-base-content/60">
+            Showing {{ firstRecord }}–{{ lastRecord }}
+            of {{ filteredAssets.length }} assets
+          </p>
+
+          <!-- PAGE NAVIGATION -->
+          <div class="flex items-center gap-2">
+
+            <button
+              type="button"
+              class="btn btn-sm btn-outline"
+              [disabled]="currentPage() <= 1"
+              (click)="previousPage()"
+            >
+              Previous
+            </button>
+
+            <span class="text-sm font-medium">
+              Page {{ currentPage() }} of {{ totalPages }}
+            </span>
+
+            <button
+              type="button"
+              class="btn btn-sm btn-outline"
+              [disabled]="currentPage() >= totalPages"
+              (click)="nextPage()"
+            >
+              Next
+            </button>
+
+          </div>
+
+        </div>
+        }
+      </div>
     </div>
   }
 
@@ -489,12 +559,23 @@
               </label>
 
               <label class="form-control">
-                <span class="label-text mb-1">SubPAR</span>
-                <input
-                  class="input input-bordered w-full"
-                  name="subpar"
-                  [(ngModel)]="form.subpar"
-                />
+                <span class="label-text mb-1">SubPAR / Assigned Staff</span>
+
+                <select
+                  class="select select-bordered w-full"
+                  name="subpar_employee_id"
+                  [(ngModel)]="form.employee_id"
+                  (ngModelChange)="onSubparEmployeeChange()"
+                >
+                  <option [ngValue]="null">Select staff member</option>
+
+                  @for (employee of employees(); track employee.id) {
+                    <option [ngValue]="employee.id">
+                      {{ employee.full_name }}
+                      {{ employee.employee_no ? '(' + employee.employee_no + ')' : '' }}
+                    </option>
+                  }
+                </select>
               </label>
 
               <label class="form-control md:col-span-2">
@@ -869,14 +950,24 @@
                 />
               </label>
 
+              
               <label class="form-control">
-                <span class="label-text mb-1">SubPAR</span>
-                <input
-                  class="input input-bordered w-full"
+                <span class="label-text mb-1">SubPAR / Staff Name</span>
+                <select
+                  class="select select-bordered w-full"
                   name="bulk_subpar"
                   [(ngModel)]="bulkForm.subpar"
-                />
+                >
+                  <option value="">Select staff member</option>
+                  @for (employee of employees(); track employee.id) {
+                    <option [value]="employee.full_name">
+                      {{ employee.full_name }}
+                      {{ employee.employee_no ? '(' + employee.employee_no + ')' : '' }}
+                    </option>
+                  }
+                </select>
               </label>
+
             </div>
           </section>
 
@@ -1372,8 +1463,20 @@
             </label>
 
             <label class="form-control">
-              <span class="label-text mb-1">SubPAR</span>
-              <input class="input input-bordered w-full" name="subpar" [(ngModel)]="form.subpar" />
+              <span class="label-text mb-1">SubPAR / Staff Name</span>
+              <select
+                class="select select-bordered w-full"
+                name="subpar"
+                [(ngModel)]="form.subpar"
+              >
+                <option value="">Select staff member</option>
+                @for (employee of employees(); track employee.id) {
+                  <option [value]="employee.full_name">
+                    {{ employee.full_name }}
+                    {{ employee.employee_no ? '(' + employee.employee_no + ')' : '' }}
+                  </option>
+                }
+              </select>
             </label>
 
             <label class="form-control md:col-span-2">
